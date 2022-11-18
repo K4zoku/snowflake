@@ -3,6 +3,7 @@ package io.gitlab.k4zoku.snowflake.concurrent;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_DATA_CENTER_ID;
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
 /**
@@ -35,7 +37,11 @@ public class SnowflakeGeneratorPool {
      *                          the number of workers will be truncated.
      * @param timestampProvider timestamp provider
      */
-    public SnowflakeGeneratorPool(long epoch, long dataCenterId, @Range(from = 0, to = 31) int workers, TimestampProvider timestampProvider) {
+    public SnowflakeGeneratorPool(
+        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) int workers,
+        @Nullable TimestampProvider timestampProvider) {
         workers = Math.toIntExact((workers < 1 ? Runtime.getRuntime().availableProcessors() : workers) & MAX_WORKER_ID);
         this.snowflakeGenerators = new ArrayList<>(workers);
         for (int i = 0; i <= workers; i++) {
@@ -60,6 +66,10 @@ public class SnowflakeGeneratorPool {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
+    }
+
+    public ExecutorService getExecutorService() {
+        return this.executorService;
     }
 
 }

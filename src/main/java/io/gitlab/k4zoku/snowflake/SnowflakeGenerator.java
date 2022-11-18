@@ -1,7 +1,9 @@
 package io.gitlab.k4zoku.snowflake;
 
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.io.Serializable;
@@ -9,11 +11,17 @@ import java.util.Objects;
 
 /**
  * <p>
- * <q>Snowflake is a network service for generating unique ID numbers at high scale with some simple guarantees.</q>
+ *     <q>
+ *         "Snowflake is a network service for generating unique ID
+ *          numbers at high scale with some simple guarantees."
+ *      </q>
  * </p>
- * <p>This is an implementation of <b>Twitter Snowflake</b> ID generator on Java. This class is thread-safe.</p>
  * <p>
- *     Structure of a snowflake:
+ *     This is an implementation of <a href="https://github.com/twitter/snowflake">Twitter Snowflake</a> ID generator on Java.
+ *     This class is <b>thread-safe</b>.
+ * </p>
+ * <details>
+ *     <summary>Structure of a snowflake:</summary>
  *     <pre>
  *         0 00000000000000000000000000000000000000000 00000 00000 000000000000
  *         1 2                                         3     4     5
@@ -86,10 +94,13 @@ import java.util.Objects;
  *              </dl>
  *          </li>
  *     </ol>
- * </p>
+ * </details>
  *
- * @see <a href="https://github.com/twitter/snowflake">snowflake</a>
  * @see <a href="https://twitter.com">Twitter</a>
+ * @see <a href="https://github.com/twitter/snowflake">Twitter Snowflake</a>
+ * @see <a href="https://developer.twitter.com/en/docs/basics/twitter-ids">Twitter IDs</a>
+ * @see <a href="https://discord.com">Discord</a>
+ * @see <a href="https://discord.com/developers/docs/reference#snowflakes">Discord Snowflakes</a>
  */
 public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGenerator> {
 
@@ -154,11 +165,11 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param workerId          The worker ID of the snowflake generator. Out of range value will be truncated.
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId, @NotNull TimestampProvider timestampProvider) {
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId, @Nullable TimestampProvider timestampProvider) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId & MAX_DATA_CENTER_ID;
         this.workerId = workerId & MAX_WORKER_ID;
-        this.timestampProvider = timestampProvider;
+        this.timestampProvider = timestampProvider == null ? DEFAULT_TIMESTAMP_PROVIDER : timestampProvider;
         this.template = (dataCenterId << DATA_CENTER_ID_SHIFT) | (workerId << WORKER_ID_SHIFT);
     }
 
@@ -233,6 +244,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      *
      * @return The generated Snowflake.
      */
+    @Contract(pure = true, value = "-> new")
     public synchronized Snowflake generate() {
         long timestamp = timestampProvider.getTimestamp();
         if (timestamp < lastTimestamp) {
