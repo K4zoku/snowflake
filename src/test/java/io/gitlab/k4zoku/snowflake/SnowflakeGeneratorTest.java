@@ -11,12 +11,12 @@ class SnowflakeGeneratorTest {
 
     @BeforeEach
     void setUp() {
-        generator = new SnowflakeGenerator();
+        generator = new SnowflakeGenerator(0, 31);
     }
 
     @Test
     void testGeneratorSetting() {
-        Snowflake snowflake = generator.next();
+        Snowflake snowflake = generator.generate();
         assertNotEquals(0, snowflake.getAsLong());
         assertEquals(snowflake.getTimestamp(generator.getEpoch()), snowflake.getTimestamp());
         assertEquals(generator.getDataCenterId(), snowflake.getDataCenterId());
@@ -26,8 +26,8 @@ class SnowflakeGeneratorTest {
 
     @Test
     void testCompare() {
-        Snowflake snowflake1 = generator.next();
-        Snowflake snowflake2 = generator.next();
+        Snowflake snowflake1 = generator.generate();
+        Snowflake snowflake2 = generator.generate();
         assertTrue(snowflake1.compareTo(snowflake2) < 0);
     }
 }

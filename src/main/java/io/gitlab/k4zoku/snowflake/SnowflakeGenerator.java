@@ -1,6 +1,7 @@
 package io.gitlab.k4zoku.snowflake;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -126,44 +127,90 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     private final long workerId;
     private volatile long sequence = 0L;
 
-    private transient volatile long lastTimestamp = -1L;
-    private transient TimestampProvider timestampProvider = DEFAULT_TIMESTAMP_PROVIDER;
+    private final long template;
 
-    public SnowflakeGenerator(long epoch, int dataCenterId, int workerId) {
+    private transient volatile long lastTimestamp = -1L;
+    private transient TimestampProvider timestampProvider;
+
+    /**
+     * Create a snowflake generator with custom epoch and timestamp provider.
+     * @param epoch The epoch of the snowflake generator.
+     * @param dataCenterId The data center ID of the snowflake generator.
+     * @param workerId The worker ID of the snowflake generator.
+     * @param timestampProvider The timestamp provider of the snowflake generator.
+     */
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId, TimestampProvider timestampProvider) {
         this.epoch = epoch;
-        this.dataCenterId = dataCenterId;
-        this.workerId = workerId;
+        this.dataCenterId = dataCenterId & MAX_DATA_CENTER_ID;
+        this.workerId = workerId & MAX_WORKER_ID;
+        this.timestampProvider = timestampProvider;
+        this.template = (dataCenterId << DATA_CENTER_ID_SHIFT) | (workerId << WORKER_ID_SHIFT);
     }
 
-    public SnowflakeGenerator(int dataCenterId, int workerId) {
+    /**
+     * Create a snowflake generator with custom epoch.
+     * @param epoch The epoch of the snowflake generator.
+     * @param dataCenterId The data center ID of the snowflake generator.
+     * @param workerId The worker ID of the snowflake generator.
+     */
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
+        this(epoch, dataCenterId, workerId, DEFAULT_TIMESTAMP_PROVIDER);
+    }
+
+    /**
+     * Create a snowflake generator with default epoch and timestamp provider.
+     * @param dataCenterId The data center ID of the snowflake generator.
+     * @param workerId The worker ID of the snowflake generator.
+     */
+    public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
         this(DEFAULT_EPOCH, dataCenterId, workerId);
     }
 
-    public SnowflakeGenerator() {
-        this(0, 0);
-    }
-
+    /**
+     * Gets the epoch of the snowflake generator.
+     * @return The epoch of the snowflake generator.
+     */
     public long getEpoch() {
         return epoch;
     }
 
+    /**
+     * Gets the data center ID of the snowflake generator.
+     * @return The data center ID of the snowflake generator.
+     */
     public long getDataCenterId() {
         return dataCenterId;
     }
 
+    /**
+     * Gets the worker ID of the snowflake generator.
+     * @return The worker ID of the snowflake generator.
+     */
     public long getWorkerId() {
         return workerId;
     }
 
+    /**
+     * Gets the timestamp provider of the snowflake generator.
+     * @return The timestamp provider of the snowflake generator.
+     */
     public TimestampProvider getTimestampProvider() {
         return timestampProvider;
     }
 
+    /**
+     * Sets the timestamp provider of the snowflake generator.
+     * @param timestampProvider The timestamp provider of the snowflake generator.
+     */
     public void setTimestampProvider(TimestampProvider timestampProvider) {
         this.timestampProvider = timestampProvider;
     }
 
-    public synchronized long nextId() {
+    /**
+     * Generates a snowflake ID.
+     * @return long value of the snowflake ID.
+     */
+    public synchronized long generateId() {
         long timestamp = timestampProvider.getTimestamp();
         if (timestamp < lastTimestamp) {
             throw new IllegalStateException("Clock moved backwards.");
@@ -178,13 +225,16 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
         }
         lastTimestamp = timestamp;
         return (timestamp - epoch) << TIMESTAMP_SHIFT
-                | dataCenterId << DATA_CENTER_ID_SHIFT
-                | workerId << WORKER_ID_SHIFT
+                | template
                 | sequence;
     }
 
-    public synchronized Snowflake next() {
-        return new Snowflake(nextId());
+    /**
+     * Generates a Snowflake.
+     * @return Snowflake instance.
+     */
+    public synchronized Snowflake generate() {
+        return new Snowflake(generateId());
     }
 
     @Override
