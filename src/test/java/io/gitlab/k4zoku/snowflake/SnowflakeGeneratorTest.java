@@ -1,17 +1,23 @@
 package io.gitlab.k4zoku.snowflake;
 
+import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Calendar;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SnowflakeGeneratorTest {
 
-    private SnowflakeGenerator generator;
+    SnowflakeGenerator generator;
 
     @BeforeEach
     void setUp() {
         generator = new SnowflakeGenerator(0, 31);
+        if (TimestampProvider.system().equals(generator.getTimestampProvider())) {
+            generator.setTimestampProvider(Calendar.getInstance()::getTimeInMillis);
+        }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.gitlab.k4zoku.snowflake.hibernate.test;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
+import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.hibernate.test.entity.TestEntity;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -48,6 +49,7 @@ class SnowflakeHibernateGeneratorTest {
 
     @BeforeEach
     void setUp() {
+        SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
         Configuration configuration = new Configuration()
             .configure()
             .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
