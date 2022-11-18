@@ -12,8 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.DEFAULT_EPOCH;
-import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.DEFAULT_TIMESTAMP_PROVIDER;
+import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
 /**
  * Pool of {@link SnowflakeGenerator}. Use this class if you want to generate snowflakes in multiple threads.
@@ -22,62 +21,37 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.DEFAULT_TIMESTAMP_PR
  */
 public class SnowflakeGeneratorPool {
     private final Collection<Callable<Snowflake>> snowflakeGenerators;
-    private final Collection<Callable<Long>> snowflakeIdGenerators;
     private final ExecutorService executorService;
 
     /**
      * Create a pool of {@link SnowflakeGenerator}.
      * @param epoch epoch
      * @param dataCenterId data center ID
-     * @param workers number of workers
+     * @param workers number of workers (threads) in the pool.
+     *                If this value is 0, the number of workers is equal to the number of processors.
+     *                If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
+     *                the number of workers will be truncated.
      * @param timestampProvider timestamp provider
      */
     public SnowflakeGeneratorPool(long epoch, long dataCenterId, @Range(from = 0, to = 31) int workers, TimestampProvider timestampProvider) {
-        workers = workers < 1 ? Runtime.getRuntime().availableProcessors() : workers;
+        workers = Math.toIntExact((workers < 1 ? Runtime.getRuntime().availableProcessors() : workers) & MAX_WORKER_ID);
         this.snowflakeGenerators = new ArrayList<>(workers);
-        this.snowflakeIdGenerators = new ArrayList<>(workers);
-        for (int i = 0; i < workers; i++) {
+        for (int i = 0; i <= workers; i++) {
             SnowflakeGenerator generator = new SnowflakeGenerator(epoch, dataCenterId, i, timestampProvider);
             snowflakeGenerators.add(generator::generate);
-            snowflakeIdGenerators.add(generator::generateId);
         }
         this.executorService = Executors.newFixedThreadPool(workers);
     }
 
-    /**
-     * Create a pool of {@link SnowflakeGenerator}.
-     * @param dataCenterId data center ID
-     * @param workers number of workers
-     */
-    public SnowflakeGeneratorPool(long dataCenterId, int workers) {
-        this(DEFAULT_EPOCH, dataCenterId, workers, DEFAULT_TIMESTAMP_PROVIDER);
-    }
-
-    /**
-     * Create a pool of {@link SnowflakeGenerator}. This constructor will get number of processors and use it as number of workers.
-     * @param dataCenterId data center ID
-     */
-    public SnowflakeGeneratorPool(long dataCenterId) {
-        this(dataCenterId, 0);
-    }
-
-    private <T> T execute(Collection<Callable<T>> tasks) {
+    public Snowflake generate() {
         try {
-            return executorService.invokeAny(tasks);
+            return executorService.invokeAny(snowflakeGenerators);
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
-    }
-
-    public Snowflake generate() {
-        return execute(snowflakeGenerators);
-    }
-
-    public long generateId() {
-        return execute(snowflakeIdGenerators);
     }
 
 }

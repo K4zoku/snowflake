@@ -120,8 +120,20 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     // DEFAULT VALUES
     public static final long DISCORD_EPOCH = 1420070400000L; // Equivalent to 2015-01-01T00:00:00+00:00, the epoch of Discord (https://discord.com/developers/docs/reference#snowflakes)
-    public static final long DEFAULT_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00, the first millisecond of the year I have created this library
+    public static final long AUTHOR_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00, the epoch of the author of this library
+    private static long defaultEpoch = DISCORD_EPOCH; // Default epoch is the epoch of Discord
     public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = TimestampProvider.system(); // Using System.currentTimeMillis()
+
+    public static void setDefaultEpoch(long epoch) {
+        if (epoch < 0) {
+            throw new IllegalArgumentException("Epoch cannot be negative.");
+        }
+        defaultEpoch = epoch;
+    }
+
+    public static long getDefaultEpoch() {
+        return defaultEpoch;
+    }
 
     // INSTANCE FIELDS
     private final long epoch;
@@ -165,7 +177,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
      */
     public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
-        this(DEFAULT_EPOCH, dataCenterId, workerId);
+        this(defaultEpoch, dataCenterId, workerId);
     }
 
     /**
@@ -209,10 +221,10 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     }
 
     /**
-     * Generates a snowflake ID.
-     * @return long value of the snowflake ID.
+     * Generates a Snowflake.
+     * @return The generated Snowflake.
      */
-    public synchronized long generateId() {
+    public synchronized Snowflake generate() {
         long timestamp = timestampProvider.getTimestamp();
         if (timestamp < lastTimestamp) {
             throw new IllegalStateException("Clock moved backwards.");
@@ -226,17 +238,8 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
             sequence = 0;
         }
         lastTimestamp = timestamp;
-        return (timestamp - epoch) << TIMESTAMP_SHIFT
-                | template
-                | sequence;
-    }
-
-    /**
-     * Generates a Snowflake.
-     * @return Snowflake instance.
-     */
-    public synchronized Snowflake generate() {
-        return new Snowflake(generateId());
+        long value = (timestamp - epoch) << TIMESTAMP_SHIFT | template | sequence;
+        return new Snowflake(value);
     }
 
     @Override

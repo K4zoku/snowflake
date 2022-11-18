@@ -34,7 +34,7 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
     }
 
     public long getTimestamp() {
-        return getTimestamp(DEFAULT_EPOCH);
+        return getTimestamp(getDefaultEpoch());
     }
 
     public long getDataCenterId() {
