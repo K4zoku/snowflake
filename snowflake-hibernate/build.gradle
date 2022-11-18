@@ -1,5 +1,5 @@
+
 dependencies {
-    implementation project(':snowflake-hibernate-type')
     compileOnly 'org.hibernate:hibernate-core:5.6.11.Final'
     testRuntimeOnly 'com.h2database:h2:2.1.214'
     testImplementation 'javax.persistence:javax.persistence-api:2.2'

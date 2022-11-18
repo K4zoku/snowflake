@@ -1,4 +1,2 @@
 rootProject.name = 'snowflake'
-include 'snowflake-hibernate-type'
-include 'snowflake-hibernate-generator'
-
+include 'snowflake-hibernate'
