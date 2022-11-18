@@ -46,7 +46,7 @@ public class SnowflakeGeneratorPool {
         @Nullable TimestampProvider timestampProvider
     ) {
         this.workers = new ConcurrentHashMap<>(initialWorkers);
-        int maxWorkers1 = maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
+        maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
         if (initialWorkers > maxWorkers) {
             throw new IllegalArgumentException("initialWorkers must be between 0 and maxWorkers");
         }
@@ -56,7 +56,7 @@ public class SnowflakeGeneratorPool {
             60L,
             TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(maxWorkers),
-            new SnowflakeThreadFactory(workerIdOffset, maxWorkers1)
+            new SnowflakeThreadFactory(workerIdOffset, maxWorkers)
         );
         this.snowflakeGeneratorFactory = new SnowflakeGeneratorFactory(epoch, dataCenterId, timestampProvider);
     }
@@ -98,8 +98,11 @@ public class SnowflakeGeneratorPool {
         return new SnowflakeWorker(generator);
     }
 
-    private SnowflakeWorker createWorker(String id) {
-        return createWorker(Long.parseLong(id));
+    private SnowflakeWorker createWorker(String threadName) {
+        if (threadName.startsWith("snowflake-")) {
+            return createWorker(Long.parseLong(threadName.substring(10)));
+        }
+        return createWorker(Thread.currentThread().getId());
     }
 
 }
