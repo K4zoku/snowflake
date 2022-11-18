@@ -165,7 +165,12 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param workerId          The worker ID of the snowflake generator. Out of range value will be truncated.
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId, @Nullable TimestampProvider timestampProvider) {
+    public SnowflakeGenerator(
+        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) long workerId,
+        @Nullable TimestampProvider timestampProvider
+    ) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId & MAX_DATA_CENTER_ID;
         this.workerId = workerId & MAX_WORKER_ID;
@@ -180,7 +185,11 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
      * @param workerId     The worker ID of the snowflake generator. Out of range value will be truncated.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
+    public SnowflakeGenerator(
+        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) long workerId
+    ) {
         this(epoch, dataCenterId, workerId, DEFAULT_TIMESTAMP_PROVIDER);
     }
 
@@ -190,7 +199,10 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
      * @param workerId     The worker ID of the snowflake generator. Out of range value will be truncated.
      */
-    public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
+    public SnowflakeGenerator(
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) long workerId
+    ) {
         this(defaultEpoch, dataCenterId, workerId);
     }
 
@@ -237,6 +249,10 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      */
     public void setTimestampProvider(TimestampProvider timestampProvider) {
         this.timestampProvider = timestampProvider;
+    }
+
+    public long getLastTimestamp() {
+        return lastTimestamp;
     }
 
     /**

@@ -3,7 +3,8 @@
     name = "TestEntitySnowflake",
     strategy = "io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator",
     parameters = {
-        @Parameter(name = SNOWFLAKE_DATA_CENTER_ID, value = "1")
+        @Parameter(name = SNOWFLAKE_DATA_CENTER_ID, value = "1"),
+        @Parameter(name = SNOWFLAKE_TIMESTAMP_PROVIDER, value = "io.gitlab.k4zoku.snowflake.hibernate.test.CounterBlockingTimestampProvider"),
     }
 )
 package io.gitlab.k4zoku.snowflake.hibernate.test.entity;
@@ -15,3 +16,4 @@ import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.TypeDef;
 
 import static io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator.SNOWFLAKE_DATA_CENTER_ID;
+import static io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator.SNOWFLAKE_TIMESTAMP_PROVIDER;

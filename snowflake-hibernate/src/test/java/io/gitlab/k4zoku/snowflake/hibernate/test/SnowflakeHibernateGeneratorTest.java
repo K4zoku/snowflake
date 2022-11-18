@@ -2,6 +2,7 @@ package io.gitlab.k4zoku.snowflake.hibernate.test;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
+import io.gitlab.k4zoku.snowflake.concurrent.SnowflakeWorker;
 import io.gitlab.k4zoku.snowflake.hibernate.test.entity.TestEntity;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -21,6 +22,7 @@ class SnowflakeHibernateGeneratorTest {
 
     @BeforeEach
     void setUp() {
+        SnowflakeWorker.test = true;
         SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
         Configuration configuration = new Configuration()
             .configure()
@@ -51,17 +53,21 @@ class SnowflakeHibernateGeneratorTest {
         session.persist(testEntity);
         session.persist(testEntity2);
 
-        System.out.printf("Persisted entity %s with ID %s%n", testEntity.getName(), testEntity.getId());
-        System.out.printf("Persisted entity %s with ID %s%n", testEntity2.getName(), testEntity2.getId());
+        System.out.printf("Persisted entity %s: %s%n", testEntity.getId(), testEntity.getId().toFormattedString());
+        System.out.printf("Persisted entity %s: %s%n", testEntity2.getId(), testEntity2.getId().toFormattedString());
 
         assertNotEquals(testEntity.getId(), testEntity2.getId());
+
+        System.out.println("Entity 1 worker ID: " + testEntity.getId().getWorkerId());
+        System.out.println("Entity 2 worker ID: " + testEntity2.getId().getWorkerId());
+
         Snowflake id1 = testEntity.getId();
         Snowflake id2 = testEntity2.getId();
         if (id1.getTimestamp() == id2.getTimestamp()) {
             System.out.println("The timestamps of the two IDs are equal");
             assertTrue(id1.getSequence() < id2.getSequence());
-            assertEquals(0, id1.getDataCenterId());
-            assertEquals(1, id2.getDataCenterId());
+            assertEquals(0, id1.getSequence());
+            assertEquals(1, id2.getSequence());
         } else {
             System.out.println("The timestamps of the two IDs are not equal");
             assertTrue(id1.getTimestamp() < id2.getTimestamp());

@@ -1,6 +1,8 @@
 package io.gitlab.k4zoku.snowflake;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.*;
 
@@ -69,6 +71,15 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
     @Override
     public String toString() {
         return Long.toString(value);
+    }
+
+    public String toFormattedString() {
+        return String.format("[%s] #%d @%d$%d",
+            Instant.ofEpochMilli(getTimestamp()).atOffset(ZoneOffset.UTC),
+            getSequence(),
+            getDataCenterId(),
+            getWorkerId()
+        );
     }
 
     @Override

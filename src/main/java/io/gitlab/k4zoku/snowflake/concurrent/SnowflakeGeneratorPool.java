@@ -8,10 +8,8 @@ import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
+import java.util.concurrent.*;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_DATA_CENTER_ID;
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
@@ -23,15 +21,23 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
  * @since 1.0
  */
 public class SnowflakeGeneratorPool {
-    private final Collection<Callable<Snowflake>> snowflakeGenerators;
+
+    public static final int DEFAULT_MAX_WORKERS = 0;
+    private final Map<String, SnowflakeWorker> workers;
+    private final Collection<Callable<Snowflake>> tasks;
     private final ExecutorService executorService;
+
+    private final int maxWorkers;
+    private final int initialWorkers;
+
+    private final SnowflakeGeneratorFactory snowflakeGeneratorFactory;
 
     /**
      * Create a pool of {@link SnowflakeGenerator}.
      *
      * @param epoch             epoch
      * @param dataCenterId      data center ID
-     * @param workers           number of workers (threads) in the pool.
+     * @param maxWorkers        number of workers (threads) in the pool.
      *                          If this value is 0, the number of workers is equal to the number of processors.
      *                          If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
      *                          the number of workers will be truncated.
@@ -40,18 +46,40 @@ public class SnowflakeGeneratorPool {
     public SnowflakeGeneratorPool(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
         @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) int workers,
-        @Nullable TimestampProvider timestampProvider) {
-        workers = Math.toIntExact((workers < 1 ? Runtime.getRuntime().availableProcessors() : workers) & MAX_WORKER_ID);
-        this.snowflakeGenerators = new ArrayList<>(workers);
-        for (int i = 0; i <= workers; i++) {
-            // NOTE: this may cause memory leak, if you have a better idea, please let me know.
-            SnowflakeGenerator generator = new SnowflakeGenerator(epoch, dataCenterId, i, timestampProvider);
-            snowflakeGenerators.add(generator::generate);
+        @Range(from = 0, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 0, to = MAX_WORKER_ID) int initialWorkers,
+        @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset,
+        @Nullable TimestampProvider timestampProvider
+    ) {
+        this.workers = new ConcurrentHashMap<>(initialWorkers);
+        this.maxWorkers = maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
+        if (initialWorkers < 0 || initialWorkers > maxWorkers) {
+            throw new IllegalArgumentException("initialWorkers must be between 0 and maxWorkers");
         }
-        this.executorService = Executors.newFixedThreadPool(workers);
+        this.tasks = new ArrayList<>(initialWorkers);
+        this.executorService = new ThreadPoolExecutor(
+            initialWorkers,
+            maxWorkers,
+            60L,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new SnowflakeThreadFactory(workerIdOffset, this.maxWorkers)
+        );
+        for (int i = 0; i < initialWorkers; i++) {
+            tasks.add(() -> workers.computeIfAbsent(Thread.currentThread().getName(), this::createWorker).call());
+        }
+        this.initialWorkers = Math.toIntExact(initialWorkers & MAX_WORKER_ID);
+        this.snowflakeGeneratorFactory = new SnowflakeGeneratorFactory(epoch, dataCenterId, timestampProvider);
     }
 
+    public SnowflakeGeneratorPool(
+        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) int maxWorkers,
+        @Nullable TimestampProvider timestampProvider
+    ) {
+        this(epoch, dataCenterId, maxWorkers, 3, 0, timestampProvider);
+    }
     /**
      * Generate a snowflake.
      *
@@ -59,7 +87,7 @@ public class SnowflakeGeneratorPool {
      */
     public Snowflake generate() {
         try {
-            return executorService.invokeAny(snowflakeGenerators);
+            return executorService.invokeAny(tasks);
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         } catch (InterruptedException e) {
@@ -68,8 +96,13 @@ public class SnowflakeGeneratorPool {
         }
     }
 
-    public ExecutorService getExecutorService() {
-        return this.executorService;
+    private SnowflakeWorker createWorker(long id) {
+        SnowflakeGenerator generator = snowflakeGeneratorFactory.create(id);
+        return new SnowflakeWorker(generator);
+    }
+
+    private SnowflakeWorker createWorker(String id) {
+        return createWorker(Long.parseLong(id));
     }
 
 }
