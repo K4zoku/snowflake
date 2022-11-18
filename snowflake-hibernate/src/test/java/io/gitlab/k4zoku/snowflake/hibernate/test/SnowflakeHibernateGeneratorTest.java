@@ -12,11 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,38 +19,13 @@ class SnowflakeHibernateGeneratorTest {
 
     Session session;
 
-    Set<Class<?>> findAllClassesUsingClassLoader(String packageName) {
-        InputStream stream = ClassLoader.getSystemClassLoader()
-            .getResourceAsStream(packageName.replace('.', '/'));
-        if (stream == null) {
-            throw new IllegalArgumentException("Package " + packageName + " not found");
-        }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        return reader.lines()
-            .filter(line -> line.endsWith(".class"))
-            .map(line -> getClass(line, packageName))
-            .collect(Collectors.toSet());
-    }
-
-    private Class<?> getClass(String className, String packageName) {
-        try {
-            return Class.forName(packageName + "."
-                + className.substring(0, className.lastIndexOf('.')));
-        } catch (ClassNotFoundException ignore) {
-            // ignore
-        }
-        return null;
-    }
-
     @BeforeEach
     void setUp() {
         SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
         Configuration configuration = new Configuration()
             .configure()
+            .addAnnotatedClass(TestEntity.class)
             .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
-        for (Class<?> clazz : findAllClassesUsingClassLoader("io.gitlab.k4zoku.snowflake.hibernate.test.entity")) {
-            configuration.addAnnotatedClass(clazz);
-        }
         ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
             .build();
         SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
