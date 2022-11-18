@@ -91,31 +91,43 @@ import java.util.Objects;
  */
 public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGenerator> {
 
-    // 2022-01-01T00:00:00+00:00
-    public static final long DEFAULT_EPOCH = 1640995200000L;
+    private static final long serialVersionUID = 0L;
+
+    // LENGTHS
     public static final long TIMESTAMP_BITS = 41L;
     public static final long DATA_CENTER_ID_BITS = 5L;
     public static final long WORKER_ID_BITS = 5L;
     public static final long SEQUENCE_BITS = 12L;
+
+    // MAX VALUES
     public static final long MAX_TIMESTAMP = ~(-1L << TIMESTAMP_BITS);
     public static final long MAX_DATA_CENTER_ID = ~(-1L << DATA_CENTER_ID_BITS);
     public static final long MAX_WORKER_ID = ~(-1L << WORKER_ID_BITS);
     public static final long MAX_SEQUENCE = ~(-1L << SEQUENCE_BITS);
-    public static final long SEQUENCE_MASK = MAX_SEQUENCE;
+
+    // OFFSETS
     public static final long TIMESTAMP_SHIFT = DATA_CENTER_ID_BITS + WORKER_ID_BITS + SEQUENCE_BITS;
-    public static final long TIMESTAMP_MASK = MAX_TIMESTAMP << TIMESTAMP_SHIFT;
     public static final long DATA_CENTER_ID_SHIFT = WORKER_ID_BITS + SEQUENCE_BITS;
-    public static final long DATA_CENTER_ID_MASK = MAX_DATA_CENTER_ID << DATA_CENTER_ID_SHIFT;
     public static final long WORKER_ID_SHIFT = SEQUENCE_BITS;
+
+    // MASKS
+    public static final long TIMESTAMP_MASK = MAX_TIMESTAMP << TIMESTAMP_SHIFT;
+    public static final long DATA_CENTER_ID_MASK = MAX_DATA_CENTER_ID << DATA_CENTER_ID_SHIFT;
     public static final long WORKER_ID_MASK = MAX_WORKER_ID << WORKER_ID_SHIFT;
-    private static final long serialVersionUID = 0L;
+    public static final long SEQUENCE_MASK = MAX_SEQUENCE;
+
+    // DEFAULT VALUES
+    public static final long DEFAULT_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00
+    public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = SystemTimestampProvider.getInstance(); // Using System.currentTimeMillis()
+
+    // INSTANCE FIELDS
     private final long epoch;
     private final long dataCenterId;
     private final long workerId;
     private volatile long sequence = 0L;
 
     private transient volatile long lastTimestamp = -1L;
-    private transient TimestampProvider timestampProvider = SystemTimestampProvider.getInstance();
+    private transient TimestampProvider timestampProvider = DEFAULT_TIMESTAMP_PROVIDER;
 
     public SnowflakeGenerator(long epoch, int dataCenterId, int workerId) {
         this.epoch = epoch;
