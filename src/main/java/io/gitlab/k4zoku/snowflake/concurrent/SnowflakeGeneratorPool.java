@@ -16,6 +16,7 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
 /**
  * Pool of {@link SnowflakeGenerator}. Use this class if you want to generate snowflakes in multiple threads.
+ *
  * @author k4zoku
  * @since 1.0
  */
@@ -25,12 +26,13 @@ public class SnowflakeGeneratorPool {
 
     /**
      * Create a pool of {@link SnowflakeGenerator}.
-     * @param epoch epoch
-     * @param dataCenterId data center ID
-     * @param workers number of workers (threads) in the pool.
-     *                If this value is 0, the number of workers is equal to the number of processors.
-     *                If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
-     *                the number of workers will be truncated.
+     *
+     * @param epoch             epoch
+     * @param dataCenterId      data center ID
+     * @param workers           number of workers (threads) in the pool.
+     *                          If this value is 0, the number of workers is equal to the number of processors.
+     *                          If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
+     *                          the number of workers will be truncated.
      * @param timestampProvider timestamp provider
      */
     public SnowflakeGeneratorPool(long epoch, long dataCenterId, @Range(from = 0, to = 31) int workers, TimestampProvider timestampProvider) {
@@ -46,6 +48,7 @@ public class SnowflakeGeneratorPool {
 
     /**
      * Generate a snowflake.
+     *
      * @return snowflake
      */
     public Snowflake generate() {

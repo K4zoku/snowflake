@@ -1,10 +1,10 @@
 @TypeDef(name = "snowflake", typeClass = SnowflakeType.class, defaultForType = Snowflake.class)
 @GenericGenerator(
-        name = "TestEntitySnowflake",
-        strategy = "io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator",
-        parameters = {
-                @Parameter(name = SNOWFLAKE_DATA_CENTER_ID, value = "1")
-        }
+    name = "TestEntitySnowflake",
+    strategy = "io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator",
+    parameters = {
+        @Parameter(name = SNOWFLAKE_DATA_CENTER_ID, value = "1")
+    }
 )
 package io.gitlab.k4zoku.snowflake.hibernate.test.entity;
 

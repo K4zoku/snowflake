@@ -25,21 +25,21 @@ class SnowflakeHibernateGeneratorTest {
 
     Set<Class<?>> findAllClassesUsingClassLoader(String packageName) {
         InputStream stream = ClassLoader.getSystemClassLoader()
-                .getResourceAsStream(packageName.replace('.', '/'));
+            .getResourceAsStream(packageName.replace('.', '/'));
         if (stream == null) {
             throw new IllegalArgumentException("Package " + packageName + " not found");
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         return reader.lines()
-                .filter(line -> line.endsWith(".class"))
-                .map(line -> getClass(line, packageName))
-                .collect(Collectors.toSet());
+            .filter(line -> line.endsWith(".class"))
+            .map(line -> getClass(line, packageName))
+            .collect(Collectors.toSet());
     }
 
     private Class<?> getClass(String className, String packageName) {
         try {
             return Class.forName(packageName + "."
-                    + className.substring(0, className.lastIndexOf('.')));
+                + className.substring(0, className.lastIndexOf('.')));
         } catch (ClassNotFoundException ignore) {
             // ignore
         }
@@ -49,13 +49,13 @@ class SnowflakeHibernateGeneratorTest {
     @BeforeEach
     void setUp() {
         Configuration configuration = new Configuration()
-                .configure()
-                .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
+            .configure()
+            .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
         for (Class<?> clazz : findAllClassesUsingClassLoader("io.gitlab.k4zoku.snowflake.hibernate.test.entity")) {
             configuration.addAnnotatedClass(clazz);
         }
         ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
-                .build();
+            .build();
         SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
         session = sessionFactory.getCurrentSession();
         session.beginTransaction();

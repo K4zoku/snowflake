@@ -35,15 +35,15 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
 
         // configure generator
         long epoch = Optional.ofNullable(params.getProperty(SNOWFLAKE_EPOCH))
-                .map(Long::parseLong)
-                .orElse(SnowflakeGenerator.getDefaultEpoch());
+            .map(Long::parseLong)
+            .orElse(SnowflakeGenerator.getDefaultEpoch());
         int dataCenterId = Optional.ofNullable(params.getProperty(SNOWFLAKE_DATA_CENTER_ID))
-                .map(Integer::parseInt)
-                .orElseThrow(() ->
-                        new MappingException(String.format("Parameter '%s' is required", SNOWFLAKE_DATA_CENTER_ID)));
+            .map(Integer::parseInt)
+            .orElseThrow(() ->
+                new MappingException(String.format("Parameter '%s' is required", SNOWFLAKE_DATA_CENTER_ID)));
         int workers = Optional.ofNullable(params.getProperty(SNOWFLAKE_WORKERS))
-                .map(Integer::parseInt)
-                .orElse(0);
+            .map(Integer::parseInt)
+            .orElse(0);
         TimestampProvider timestampProvider = TimestampProvider.getInstance(params.getProperty(SNOWFLAKE_TIMESTAMP_PROVIDER));
         generator = new SnowflakeGeneratorPool(epoch, dataCenterId, workers, timestampProvider);
     }

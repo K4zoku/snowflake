@@ -13,11 +13,11 @@ import java.util.Objects;
  * </p>
  * <p>This is an implementation of <b>Twitter Snowflake</b> ID generator on Java. This class is thread-safe.</p>
  * <p>
- * Structure of a snowflake:
- * <pre>
- *   0 00000000000000000000000000000000000000000 00000 00000 000000000000
- *   1 2                                         3     4     5
- * </pre>
+ *     Structure of a snowflake:
+ *     <pre>
+ *         0 00000000000000000000000000000000000000000 00000 00000 000000000000
+ *         1 2                                         3     4     5
+ *     </pre>
  *     <ol>
  *         <li>
  *             Sign bit
@@ -148,12 +148,13 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Create a snowflake generator with custom epoch and timestamp provider.
-     * @param epoch The epoch of the snowflake generator. (milliseconds since unix epoch)
-     * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
-     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
+     *
+     * @param epoch             The epoch of the snowflake generator. (milliseconds since unix epoch)
+     * @param dataCenterId      The data center ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId          The worker ID of the snowflake generator. Out of range value will be truncated.
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId, @NotNull TimestampProvider timestampProvider) {
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId, @NotNull TimestampProvider timestampProvider) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId & MAX_DATA_CENTER_ID;
         this.workerId = workerId & MAX_WORKER_ID;
@@ -163,25 +164,28 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Create a snowflake generator with custom epoch.
-     * @param epoch The epoch of the snowflake generator. (milliseconds since unix epoch)
+     *
+     * @param epoch        The epoch of the snowflake generator. (milliseconds since unix epoch)
      * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
-     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId     The worker ID of the snowflake generator. Out of range value will be truncated.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
         this(epoch, dataCenterId, workerId, DEFAULT_TIMESTAMP_PROVIDER);
     }
 
     /**
      * Create a snowflake generator with default epoch and timestamp provider.
+     *
      * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
-     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId     The worker ID of the snowflake generator. Out of range value will be truncated.
      */
-    public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
+    public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId, @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
         this(defaultEpoch, dataCenterId, workerId);
     }
 
     /**
      * Gets the epoch of the snowflake generator.
+     *
      * @return The epoch of the snowflake generator.
      */
     public long getEpoch() {
@@ -190,6 +194,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Gets the data center ID of the snowflake generator.
+     *
      * @return The data center ID of the snowflake generator.
      */
     public long getDataCenterId() {
@@ -198,6 +203,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Gets the worker ID of the snowflake generator.
+     *
      * @return The worker ID of the snowflake generator.
      */
     public long getWorkerId() {
@@ -206,6 +212,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Gets the timestamp provider of the snowflake generator.
+     *
      * @return The timestamp provider of the snowflake generator.
      */
     public TimestampProvider getTimestampProvider() {
@@ -214,6 +221,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Sets the timestamp provider of the snowflake generator.
+     *
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
     public void setTimestampProvider(TimestampProvider timestampProvider) {
@@ -222,6 +230,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Generates a Snowflake.
+     *
      * @return The generated Snowflake.
      */
     public synchronized Snowflake generate() {
@@ -257,8 +266,8 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
         }
         SnowflakeGenerator other = (SnowflakeGenerator) obj;
         return this.epoch == other.epoch
-                && this.dataCenterId == other.dataCenterId
-                && this.workerId == other.workerId;
+            && this.dataCenterId == other.dataCenterId
+            && this.workerId == other.workerId;
     }
 
     @Override
