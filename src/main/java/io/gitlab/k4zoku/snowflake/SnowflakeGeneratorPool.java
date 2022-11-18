@@ -16,7 +16,8 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.DEFAULT_TIMESTAMP_PR
  * @since 1.0.0
  */
 public class SnowflakeGeneratorPool {
-    private final Collection<Callable<Snowflake>> tasks;
+    private final Collection<Callable<Snowflake>> snowflakeGenerators;
+    private final Collection<Callable<Long>> snowflakeIdGenerators;
     private final ExecutorService executorService;
 
     /**
@@ -27,10 +28,12 @@ public class SnowflakeGeneratorPool {
      * @param timestampProvider timestamp provider
      */
     public SnowflakeGeneratorPool(long epoch, long dataCenterId, int workers, TimestampProvider timestampProvider) {
-        this.tasks = new ArrayList<>(workers);
+        this.snowflakeGenerators = new ArrayList<>(workers);
+        this.snowflakeIdGenerators = new ArrayList<>(workers);
         for (int i = 0; i < workers; i++) {
             SnowflakeGenerator generator = new SnowflakeGenerator(epoch, dataCenterId, i, timestampProvider);
-            tasks.add(generator::generate);
+            snowflakeGenerators.add(generator::generate);
+            snowflakeIdGenerators.add(generator::generateId);
         }
         this.executorService = Executors.newFixedThreadPool(workers);
     }
@@ -52,7 +55,7 @@ public class SnowflakeGeneratorPool {
         this(dataCenterId, Runtime.getRuntime().availableProcessors());
     }
 
-    public Snowflake generate() {
+    private <T> T execute(Collection<Callable<T>> tasks) {
         try {
             return executorService.invokeAny(tasks);
         } catch (ExecutionException e) {
@@ -62,4 +65,13 @@ public class SnowflakeGeneratorPool {
             throw new IllegalStateException(e);
         }
     }
+
+    public Snowflake generate() {
+        return execute(snowflakeGenerators);
+    }
+
+    public long generateId() {
+        return execute(snowflakeIdGenerators);
+    }
+
 }
