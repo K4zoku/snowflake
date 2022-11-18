@@ -65,14 +65,32 @@ class SnowflakeHibernateGeneratorTest {
         Snowflake id2 = testEntity2.getId();
         if (id1.getTimestamp() == id2.getTimestamp()) {
             System.out.println("The timestamps of the two IDs are equal");
-            assertTrue(id1.getSequence() < id2.getSequence());
-            assertEquals(0, id1.getSequence());
-            assertEquals(1, id2.getSequence());
+            if (id1.getWorkerId() == id2.getWorkerId()) {
+                System.out.println("The worker IDs of the two IDs are equal");
+                assertTrue(id1.getSequence() < id2.getSequence());
+                assertEquals(0, id1.getSequence());
+                assertEquals(1, id2.getSequence());
+            } else {
+                System.out.println("The worker IDs of the two IDs are not equal");
+                assertEquals(0, id1.getSequence());
+                assertEquals(0, id2.getSequence());
+            }
         } else {
             System.out.println("The timestamps of the two IDs are not equal");
             assertTrue(id1.getTimestamp() < id2.getTimestamp());
             assertEquals(0, id1.getSequence());
             assertEquals(0, id2.getSequence());
+        }
+    }
+
+    @Test
+    @Transactional
+    void testMultiple() {
+        for (int i = 0; i < 100; i++) {
+            TestEntity testEntity = new TestEntity();
+            testEntity.setName("test " + i);
+            session.persist(testEntity);
+            System.out.printf("Persisted entity %s: %s%n", testEntity.getId(), testEntity.getId().toFormattedString());
         }
     }
 

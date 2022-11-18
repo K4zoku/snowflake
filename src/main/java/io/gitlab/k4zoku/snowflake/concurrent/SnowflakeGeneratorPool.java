@@ -6,8 +6,6 @@ import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -24,11 +22,7 @@ public class SnowflakeGeneratorPool {
 
     public static final int DEFAULT_MAX_WORKERS = 0;
     private final Map<String, SnowflakeWorker> workers;
-    private final Collection<Callable<Snowflake>> tasks;
     private final ExecutorService executorService;
-
-    private final int maxWorkers;
-    private final int initialWorkers;
 
     private final SnowflakeGeneratorFactory snowflakeGeneratorFactory;
 
@@ -52,23 +46,18 @@ public class SnowflakeGeneratorPool {
         @Nullable TimestampProvider timestampProvider
     ) {
         this.workers = new ConcurrentHashMap<>(initialWorkers);
-        this.maxWorkers = maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
-        if (initialWorkers < 0 || initialWorkers > maxWorkers) {
+        int maxWorkers1 = maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
+        if (initialWorkers > maxWorkers) {
             throw new IllegalArgumentException("initialWorkers must be between 0 and maxWorkers");
         }
-        this.tasks = new ArrayList<>(initialWorkers);
         this.executorService = new ThreadPoolExecutor(
             initialWorkers,
             maxWorkers,
             60L,
             TimeUnit.SECONDS,
-            new SynchronousQueue<>(),
-            new SnowflakeThreadFactory(workerIdOffset, this.maxWorkers)
+            new ArrayBlockingQueue<>(maxWorkers),
+            new SnowflakeThreadFactory(workerIdOffset, maxWorkers1)
         );
-        for (int i = 0; i < initialWorkers; i++) {
-            tasks.add(() -> workers.computeIfAbsent(Thread.currentThread().getName(), this::createWorker).call());
-        }
-        this.initialWorkers = Math.toIntExact(initialWorkers & MAX_WORKER_ID);
         this.snowflakeGeneratorFactory = new SnowflakeGeneratorFactory(epoch, dataCenterId, timestampProvider);
     }
 
@@ -87,13 +76,21 @@ public class SnowflakeGeneratorPool {
      */
     public Snowflake generate() {
         try {
-            return executorService.invokeAny(tasks);
+            return generateAsync().get();
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
+    }
+
+    public Future<Snowflake> generateAsync() {
+        return executorService.submit(() -> getWorker().call());
+    }
+
+    private SnowflakeWorker getWorker() {
+        return workers.computeIfAbsent(Thread.currentThread().getName(), this::createWorker);
     }
 
     private SnowflakeWorker createWorker(long id) {
