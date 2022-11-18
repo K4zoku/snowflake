@@ -23,6 +23,6 @@ allprojects {
 
 subprojects {
     dependencies {
-        compileOnly project(project.parent.path)
+        implementation project(project.parent.path)
     }
 }
