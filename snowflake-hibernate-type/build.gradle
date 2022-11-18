@@ -1,0 +1,6 @@
+group 'io.gitlab.k4zoku'
+version '1.0-SNAPSHOT'
+
+dependencies {
+    implementation 'org.hibernate:hibernate-core:5.6.11.Final'
+}

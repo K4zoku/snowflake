@@ -2,19 +2,27 @@ plugins {
     id 'java'
 }
 
-group 'io.gitlab.k4zoku'
-version '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
+allprojects {
+    apply plugin: 'java'
+    group 'io.gitlab.k4zoku'
+    version '1.0-SNAPSHOT'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        implementation 'org.jetbrains:annotations:23.0.0'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    }
+    test {
+        useJUnitPlatform()
+    }
 }
 
-dependencies {
-    implementation 'org.jetbrains:annotations:23.0.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
-}
-
-test {
-    useJUnitPlatform()
+subprojects {
+    dependencies {
+        compileOnly project(project.parent.path)
+    }
 }
