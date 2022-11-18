@@ -3,6 +3,7 @@ package io.gitlab.k4zoku.snowflake.concurrent;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
+import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +32,8 @@ public class SnowflakeGeneratorPool {
      * @param workers number of workers
      * @param timestampProvider timestamp provider
      */
-    public SnowflakeGeneratorPool(long epoch, long dataCenterId, int workers, TimestampProvider timestampProvider) {
+    public SnowflakeGeneratorPool(long epoch, long dataCenterId, @Range(from = 0, to = 31) int workers, TimestampProvider timestampProvider) {
+        workers = workers < 1 ? Runtime.getRuntime().availableProcessors() : workers;
         this.snowflakeGenerators = new ArrayList<>(workers);
         this.snowflakeIdGenerators = new ArrayList<>(workers);
         for (int i = 0; i < workers; i++) {
@@ -56,7 +58,7 @@ public class SnowflakeGeneratorPool {
      * @param dataCenterId data center ID
      */
     public SnowflakeGeneratorPool(long dataCenterId) {
-        this(dataCenterId, Runtime.getRuntime().availableProcessors());
+        this(dataCenterId, 0);
     }
 
     private <T> T execute(Collection<Callable<T>> tasks) {

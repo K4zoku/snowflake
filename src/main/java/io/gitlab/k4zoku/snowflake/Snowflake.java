@@ -11,6 +11,9 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
     private final long value;
 
     public Snowflake(long value) {
+        if (value < 4194304) {
+            throw new IllegalArgumentException(String.format("'%d' doesn't look like a snowflake. Snowflakes are much larger numbers.", value));
+        }
         this.value = value;
     }
 

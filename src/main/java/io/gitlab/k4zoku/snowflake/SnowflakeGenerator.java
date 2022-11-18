@@ -1,6 +1,5 @@
 package io.gitlab.k4zoku.snowflake;
 
-import io.gitlab.k4zoku.snowflake.time.SystemTimestampProvider;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
@@ -120,8 +119,9 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     public static final long SEQUENCE_MASK = MAX_SEQUENCE;
 
     // DEFAULT VALUES
-    public static final long DEFAULT_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00
-    public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = SystemTimestampProvider.getInstance(); // Using System.currentTimeMillis()
+    public static final long DISCORD_EPOCH = 1420070400000L; // Equivalent to 2015-01-01T00:00:00+00:00, the epoch of Discord (https://discord.com/developers/docs/reference#snowflakes)
+    public static final long DEFAULT_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00, the first millisecond of the year I have created this library
+    public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = TimestampProvider.system(); // Using System.currentTimeMillis()
 
     // INSTANCE FIELDS
     private final long epoch;
@@ -136,12 +136,12 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Create a snowflake generator with custom epoch and timestamp provider.
-     * @param epoch The epoch of the snowflake generator.
-     * @param dataCenterId The data center ID of the snowflake generator.
-     * @param workerId The worker ID of the snowflake generator.
+     * @param epoch The epoch of the snowflake generator. (milliseconds since unix epoch)
+     * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
-    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId, TimestampProvider timestampProvider) {
+    public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId, @NotNull TimestampProvider timestampProvider) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId & MAX_DATA_CENTER_ID;
         this.workerId = workerId & MAX_WORKER_ID;
@@ -151,9 +151,9 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Create a snowflake generator with custom epoch.
-     * @param epoch The epoch of the snowflake generator.
-     * @param dataCenterId The data center ID of the snowflake generator.
-     * @param workerId The worker ID of the snowflake generator.
+     * @param epoch The epoch of the snowflake generator. (milliseconds since unix epoch)
+     * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
      */
     public SnowflakeGenerator(long epoch, @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
         this(epoch, dataCenterId, workerId, DEFAULT_TIMESTAMP_PROVIDER);
@@ -161,8 +161,8 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
 
     /**
      * Create a snowflake generator with default epoch and timestamp provider.
-     * @param dataCenterId The data center ID of the snowflake generator.
-     * @param workerId The worker ID of the snowflake generator.
+     * @param dataCenterId The data center ID of the snowflake generator. Out of range value will be truncated.
+     * @param workerId The worker ID of the snowflake generator. Out of range value will be truncated.
      */
     public SnowflakeGenerator(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,  @Range(from = 0, to = MAX_WORKER_ID) long workerId) {
         this(DEFAULT_EPOCH, dataCenterId, workerId);
