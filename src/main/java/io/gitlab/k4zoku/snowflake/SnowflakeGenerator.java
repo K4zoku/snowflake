@@ -31,7 +31,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     private volatile long sequence = 0L;
 
     private transient volatile long lastTimestamp = -1L;
-    private transient volatile TimestampProvider timestampProvider = SystemTimestampProvider.getInstance();
+    private transient TimestampProvider timestampProvider = SystemTimestampProvider.getInstance();
 
     public SnowflakeGenerator(long epoch, int dataCenterId, int workerId) {
         this.epoch = epoch;
