@@ -1,5 +1,7 @@
 package io.gitlab.k4zoku.snowflake;
 
+import io.gitlab.k4zoku.snowflake.time.SystemTimestampProvider;
+import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
@@ -127,7 +129,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     private final long workerId;
     private volatile long sequence = 0L;
 
-    private final long template;
+    private final long template; // pre-computed snowflake template with initialized data center ID and worker ID
 
     private transient volatile long lastTimestamp = -1L;
     private transient TimestampProvider timestampProvider;

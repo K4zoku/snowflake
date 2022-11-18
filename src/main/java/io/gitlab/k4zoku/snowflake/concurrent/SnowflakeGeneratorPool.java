@@ -1,4 +1,8 @@
-package io.gitlab.k4zoku.snowflake;
+package io.gitlab.k4zoku.snowflake.concurrent;
+
+import io.gitlab.k4zoku.snowflake.Snowflake;
+import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
+import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;

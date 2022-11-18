@@ -1,4 +1,4 @@
-package io.gitlab.k4zoku.snowflake;
+package io.gitlab.k4zoku.snowflake.time;
 
 import java.io.Serializable;
 
