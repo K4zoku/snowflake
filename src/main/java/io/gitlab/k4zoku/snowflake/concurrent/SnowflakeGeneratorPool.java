@@ -17,7 +17,7 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 /**
  * Pool of {@link SnowflakeGenerator}. Use this class if you want to generate snowflakes in multiple threads.
  * @author k4zoku
- * @since 1.0.0
+ * @since 1.0
  */
 public class SnowflakeGeneratorPool {
     private final Collection<Callable<Snowflake>> snowflakeGenerators;
@@ -37,12 +37,17 @@ public class SnowflakeGeneratorPool {
         workers = Math.toIntExact((workers < 1 ? Runtime.getRuntime().availableProcessors() : workers) & MAX_WORKER_ID);
         this.snowflakeGenerators = new ArrayList<>(workers);
         for (int i = 0; i <= workers; i++) {
+            // NOTE: this may cause memory leak, if you have a better idea, please let me know.
             SnowflakeGenerator generator = new SnowflakeGenerator(epoch, dataCenterId, i, timestampProvider);
             snowflakeGenerators.add(generator::generate);
         }
         this.executorService = Executors.newFixedThreadPool(workers);
     }
 
+    /**
+     * Generate a snowflake.
+     * @return snowflake
+     */
     public Snowflake generate() {
         try {
             return executorService.invokeAny(snowflakeGenerators);
