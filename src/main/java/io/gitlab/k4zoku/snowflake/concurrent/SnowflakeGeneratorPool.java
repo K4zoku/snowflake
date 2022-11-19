@@ -2,6 +2,7 @@ package io.gitlab.k4zoku.snowflake.concurrent;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
+import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;

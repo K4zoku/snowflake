@@ -1,5 +1,6 @@
 package io.gitlab.k4zoku.snowflake.concurrent;
 
+import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 

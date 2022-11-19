@@ -7,12 +7,15 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SnowflakeHibernateGeneratorTest {
@@ -29,18 +32,11 @@ class SnowflakeHibernateGeneratorTest {
         ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
             .build();
         SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-        session = sessionFactory.getCurrentSession();
+        session = sessionFactory.openSession();
         session.beginTransaction();
     }
 
-    @AfterEach
-    void tearDown() {
-        session.getTransaction().commit();
-        session.close();
-    }
-
     @Test
-    @Transactional
     void test() {
         TestEntity testEntity = new TestEntity();
         testEntity.setName("test 1");
@@ -84,11 +80,31 @@ class SnowflakeHibernateGeneratorTest {
     @Test
     @Transactional
     void testMultiple() {
-        for (int i = 0; i < 100; i++) {
+        SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
+        Configuration configuration = new Configuration()
+            .configure()
+            .addAnnotatedClass(TestEntity.class)
+            .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
+        ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
+            .build();
+        SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+        ExecutorService executor = new ThreadPoolExecutor(32, 32, 1L, MINUTES, new LinkedBlockingQueue<>());
+        for (int i = 0; i < 64; i++) {
+            final int j = i;
+            Session session = sessionFactory.openSession();
+            session.beginTransaction();
             TestEntity testEntity = new TestEntity();
-            testEntity.setName("test " + i);
+            testEntity.setName("test " + j);
             session.persist(testEntity);
             System.out.printf("Persisted entity %s: %s%n", testEntity.getId(), testEntity.getId().toFormattedString());
+            session.close();
+        }
+        executor.shutdown();
+        try {
+            assertTrue(executor.awaitTermination(1000, MINUTES));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Interrupted while waiting for executor to terminate");
         }
     }
 

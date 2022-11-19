@@ -1,6 +1,5 @@
-package io.gitlab.k4zoku.snowflake.concurrent;
+package io.gitlab.k4zoku.snowflake;
 
-import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 
 public class SnowflakeGeneratorFactory {
