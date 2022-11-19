@@ -19,6 +19,10 @@ public class SnowflakeWorker implements Callable<Snowflake> {
 
     @Override
     public Snowflake call() {
+        return work();
+    }
+
+    public Snowflake work() {
         return generator.generate();
     }
 
