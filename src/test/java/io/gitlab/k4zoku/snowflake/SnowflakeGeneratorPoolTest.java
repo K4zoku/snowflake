@@ -14,10 +14,12 @@ class SnowflakeGeneratorPoolTest {
     @Test
     void test() throws InterruptedException {
         SnowflakeGeneratorPool pool = new SnowflakeGeneratorPool(SnowflakeGenerator.DISCORD_EPOCH, 26, 32, 3, 0, TimestampProvider.system());
-        ExecutorService executor = Executors.newFixedThreadPool(32);
-        for (int i = 0; i < 100; i++) {
+        ExecutorService executor = Executors.newFixedThreadPool(1000);
+        for (int i = 0; i < 1000; i++) {
             executor.submit(() -> {
-                for (int j = 0; j < 100; j++) System.out.println(pool.generate().toFormattedString());
+                for (int j = 0; j < 100; j++) {
+                    System.out.println(pool.generate().toFormattedString());
+                }
             });
         }
         executor.shutdown();

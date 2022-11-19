@@ -74,11 +74,11 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
     }
 
     public String toFormattedString() {
-        return String.format("[%s] #%d @%d$%d",
+        return String.format("[%-24s] [%02d/%02d] #%04d",
             Instant.ofEpochMilli(getTimestamp()).atOffset(ZoneOffset.UTC),
-            getSequence(),
             getDataCenterId(),
-            getWorkerId()
+            getWorkerId(),
+            getSequence()
         );
     }
 
