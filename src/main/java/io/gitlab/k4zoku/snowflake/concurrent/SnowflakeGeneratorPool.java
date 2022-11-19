@@ -18,8 +18,6 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
  * @since 1.0
  */
 public class SnowflakeGeneratorPool {
-
-    public static final int DEFAULT_MAX_WORKERS = 0;
     private final ExecutorService executorService;
 
     /**
