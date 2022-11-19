@@ -36,7 +36,7 @@ public class SnowflakeGeneratorPool {
     public SnowflakeGeneratorPool(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
         @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
         @Range(from = 0, to = MAX_WORKER_ID) int initialWorkers,
         @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset,
         @Nullable TimestampProvider timestampProvider
@@ -58,7 +58,7 @@ public class SnowflakeGeneratorPool {
     public SnowflakeGeneratorPool(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
         @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
         @Nullable TimestampProvider timestampProvider
     ) {
         this(epoch, dataCenterId, maxWorkers, maxWorkers, 0, timestampProvider);

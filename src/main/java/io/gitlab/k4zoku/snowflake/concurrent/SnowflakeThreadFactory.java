@@ -18,11 +18,11 @@ public class SnowflakeThreadFactory implements ThreadFactory {
 
     public SnowflakeThreadFactory(
         @Range(from = 0, to = MAX_WORKER_ID) int offset,
-        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
         @NotNull SnowflakeGeneratorFactory generatorFactory
     ) {
-        this.maxWorkers = maxWorkers & MAX_WORKER_ID;
-        this.counter = offset & MAX_WORKER_ID;
+        this.maxWorkers = maxWorkers;
+        this.counter = offset;
         this.generatorFactory = generatorFactory;
     }
 
