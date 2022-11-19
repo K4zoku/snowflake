@@ -1,6 +1,7 @@
 package io.gitlab.k4zoku.snowflake.concurrent;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,11 @@ public class SnowflakeThreadFactory implements ThreadFactory {
 
     private final Map<Long, SnowflakeWorker> workers = new ConcurrentHashMap<>();
 
-    public SnowflakeThreadFactory(int offset, int maxWorkers, @NotNull SnowflakeGeneratorFactory generatorFactory) {
+    public SnowflakeThreadFactory(
+        @Range(from = 0, to = MAX_WORKER_ID) int offset,
+        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
+        @NotNull SnowflakeGeneratorFactory generatorFactory
+    ) {
         this.maxWorkers = maxWorkers & MAX_WORKER_ID;
         this.counter = offset & MAX_WORKER_ID;
         this.generatorFactory = generatorFactory;
@@ -26,7 +31,7 @@ public class SnowflakeThreadFactory implements ThreadFactory {
         long id = counter;
         SnowflakeWorker worker = workers.computeIfAbsent(id, i -> new SnowflakeWorker(generatorFactory.create(i)));
         Thread thread = new SnowflakeWorkerThread(worker, r);
-        counter = (counter + 1) & maxWorkers;
+        counter = (counter + 1) % maxWorkers;
         return thread;
     }
 }

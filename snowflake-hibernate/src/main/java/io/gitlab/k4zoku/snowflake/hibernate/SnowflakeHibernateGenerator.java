@@ -43,7 +43,7 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
                 new MappingException(String.format("Parameter '%s' is required", SNOWFLAKE_DATA_CENTER_ID)));
         int workers = Optional.ofNullable(params.getProperty(SNOWFLAKE_WORKERS))
             .map(Integer::parseInt)
-            .orElse(0);
+            .orElse(Runtime.getRuntime().availableProcessors());
         TimestampProvider timestampProvider = TimestampProvider.getInstance(params.getProperty(SNOWFLAKE_TIMESTAMP_PROVIDER));
         generator = new SnowflakeGeneratorPool(epoch, dataCenterId, workers, timestampProvider);
     }

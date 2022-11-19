@@ -36,12 +36,11 @@ public class SnowflakeGeneratorPool {
     public SnowflakeGeneratorPool(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
         @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
         @Range(from = 0, to = MAX_WORKER_ID) int initialWorkers,
         @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset,
         @Nullable TimestampProvider timestampProvider
     ) {
-        maxWorkers = Math.toIntExact((maxWorkers == DEFAULT_MAX_WORKERS ? Runtime.getRuntime().availableProcessors() : maxWorkers) & MAX_WORKER_ID);
         if (initialWorkers > maxWorkers) {
             throw new IllegalArgumentException("initialWorkers must be between 0 and maxWorkers");
         }
@@ -49,9 +48,9 @@ public class SnowflakeGeneratorPool {
         this.executorService = new ThreadPoolExecutor(
             initialWorkers,
             maxWorkers,
-            0L,
+            3L,
             TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(maxWorkers),
+            new LinkedBlockingQueue<>(initialWorkers),
             new SnowflakeThreadFactory(workerIdOffset, maxWorkers, snowflakeGeneratorFactory)
         );
     }
@@ -59,7 +58,7 @@ public class SnowflakeGeneratorPool {
     public SnowflakeGeneratorPool(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
         @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) int maxWorkers,
+        @Range(from = 1, to = MAX_WORKER_ID) int maxWorkers,
         @Nullable TimestampProvider timestampProvider
     ) {
         this(epoch, dataCenterId, maxWorkers, maxWorkers, 0, timestampProvider);

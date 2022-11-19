@@ -26,15 +26,7 @@ public class SnowflakeWorker implements Callable<Snowflake> {
         return generator.generate();
     }
 
-    public SnowflakeGenerator getGenerator() {
-        return generator;
-    }
-
     public long getId() {
         return id;
-    }
-
-    public void stop() {
-        // do nothing
     }
 }
