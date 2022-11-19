@@ -61,6 +61,7 @@ public class SnowflakeGeneratorPool {
     ) {
         this(epoch, dataCenterId, maxWorkers, 0, 0, timestampProvider);
     }
+
     /**
      * Generate a snowflake.
      *

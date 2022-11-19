@@ -11,18 +11,18 @@ import java.util.Objects;
 
 /**
  * <p>
- *     <q>
- *         "Snowflake is a network service for generating unique ID
- *          numbers at high scale with some simple guarantees."
- *      </q>
+ * <q>
+ * "Snowflake is a network service for generating unique ID
+ * numbers at high scale with some simple guarantees."
+ * </q>
  * </p>
  * <p>
- *     This is an implementation of <a href="https://github.com/twitter/snowflake">Twitter Snowflake</a> ID generator on Java.
- *     This class is <b>thread-safe</b>.
+ * This is an implementation of <a href="https://github.com/twitter/snowflake">Twitter Snowflake</a> ID generator on Java.
+ * This class is <b>thread-safe</b>.
  * </p>
  * <details>
- *     <summary>Structure of a snowflake:</summary>
- *     <pre>
+ * <summary>Structure of a snowflake:</summary>
+ * <pre>
  *         0 00000000000000000000000000000000000000000 00000 00000 000000000000
  *         1 2                                         3     4     5
  *     </pre>
