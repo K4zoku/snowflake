@@ -50,7 +50,7 @@ public class SnowflakeGeneratorPool {
             maxWorkers,
             3L,
             TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(initialWorkers),
+            new ArrayBlockingQueue<>(1),
             new SnowflakeThreadFactory(workerIdOffset, maxWorkers, snowflakeGeneratorFactory)
         );
     }
@@ -61,7 +61,7 @@ public class SnowflakeGeneratorPool {
         @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
         @Nullable TimestampProvider timestampProvider
     ) {
-        this(epoch, dataCenterId, maxWorkers, maxWorkers, 0, timestampProvider);
+        this(epoch, dataCenterId, maxWorkers, 0, 0, timestampProvider);
     }
     /**
      * Generate a snowflake.

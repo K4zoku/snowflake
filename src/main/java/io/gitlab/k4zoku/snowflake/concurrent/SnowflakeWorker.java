@@ -6,9 +6,6 @@ import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import java.util.concurrent.Callable;
 
 public class SnowflakeWorker implements Callable<Snowflake> {
-
-    public static boolean test = false;
-
     private final SnowflakeGenerator generator;
     private final long id;
 
