@@ -22,7 +22,7 @@ public class SnowflakeGeneratorPoolBenchmark {
     }
 
     @Benchmark
-    @Threads(4)
+    @Threads(16)
     public void snowflakeGenerateBenchmarkMultiThread() {
         pool.generate();
     }
