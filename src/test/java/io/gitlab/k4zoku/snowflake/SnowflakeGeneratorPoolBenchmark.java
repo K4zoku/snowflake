@@ -6,6 +6,11 @@ import org.openjdk.jmh.annotations.*;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Fork(value = 1, warmups = 1)
+@Warmup(iterations = 1)
+@Measurement(iterations = 1)
 public class SnowflakeGeneratorPoolBenchmark {
 
     private SnowflakeGeneratorPool pool;
@@ -17,22 +22,12 @@ public class SnowflakeGeneratorPoolBenchmark {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 1)
-    @Measurement(iterations = 1)
     @Threads(4)
     public void snowflakeGenerateBenchmarkMultiThread() {
         pool.generate();
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Fork(value = 1, warmups = 1)
-    @Warmup(iterations = 1)
-    @Measurement(iterations = 1)
     public void snowflakeGenerateBenchmarkSingleThread() {
         pool.generate();
     }
