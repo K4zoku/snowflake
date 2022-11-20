@@ -3,20 +3,25 @@ package io.gitlab.k4zoku.snowflake.concurrent;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 
-public class SnowflakeWorker {
+public class SnowflakeWorker extends Thread {
+
     private final SnowflakeGenerator generator;
-    private final long id;
 
-    public SnowflakeWorker(SnowflakeGenerator generator) {
+    public SnowflakeWorker(SnowflakeGenerator generator, Runnable target) {
+        super(target);
+        this.setDaemon(true);
         this.generator = generator;
-        this.id = generator.getWorkerId();
-    }
-
-    public long getId() {
-        return id;
     }
 
     public Snowflake work() {
         return generator.generate();
+    }
+
+    public static SnowflakeWorker currentWorker() {
+        Thread thread = Thread.currentThread();
+        if (thread instanceof SnowflakeWorker) {
+            return (SnowflakeWorker) thread;
+        }
+        throw new IllegalStateException("Current thread is not a SnowflakeWorker");
     }
 }

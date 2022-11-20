@@ -7,14 +7,18 @@ public class SnowflakeGeneratorFactory {
     private final long dataCenterId;
     private final TimestampProvider timestampProvider;
 
-    public SnowflakeGeneratorFactory(
+    SnowflakeGeneratorFactory(
+        TimestampProvider timestampProvider,
         long epoch,
-        long dataCenterId,
-        TimestampProvider timestampProvider
+        long dataCenterId
     ) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId;
         this.timestampProvider = timestampProvider;
+    }
+
+    public static SnowflakeGeneratorFactoryBuilder builder() {
+        return new SnowflakeGeneratorFactoryBuilder();
     }
 
     public SnowflakeGenerator create(long workerId) {

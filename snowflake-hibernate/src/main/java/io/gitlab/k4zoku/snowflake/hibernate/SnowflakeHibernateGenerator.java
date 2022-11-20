@@ -2,6 +2,7 @@ package io.gitlab.k4zoku.snowflake.hibernate;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
+import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
 import io.gitlab.k4zoku.snowflake.concurrent.SnowflakeGeneratorPool;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.hibernate.MappingException;
@@ -45,7 +46,12 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
             .map(Integer::parseInt)
             .orElse(Runtime.getRuntime().availableProcessors());
         TimestampProvider timestampProvider = TimestampProvider.getInstance(params.getProperty(SNOWFLAKE_TIMESTAMP_PROVIDER));
-        generator = new SnowflakeGeneratorPool(epoch, dataCenterId, workers, timestampProvider);
+        SnowflakeGeneratorFactory factory = SnowflakeGeneratorFactory.builder()
+            .epoch(epoch)
+            .dataCenterId(dataCenterId)
+            .timestampProvider(timestampProvider)
+            .build();
+        generator = new SnowflakeGeneratorPool(factory, workers);
     }
 
     @Override

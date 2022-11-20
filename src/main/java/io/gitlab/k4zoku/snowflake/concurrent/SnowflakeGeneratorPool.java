@@ -3,13 +3,12 @@ package io.gitlab.k4zoku.snowflake.concurrent;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
-import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_DATA_CENTER_ID;
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
 /**
@@ -20,47 +19,43 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
  */
 public class SnowflakeGeneratorPool {
     private final ExecutorService executorService;
+    private final AtomicLong counter = new AtomicLong(0);
 
     /**
      * Create a pool of {@link SnowflakeGenerator}.
      *
-     * @param epoch             epoch
-     * @param dataCenterId      data center ID
-     * @param maxWorkers        number of workers (threads) in the pool.
+     * @param factory           factory to create {@link SnowflakeGenerator}
+     * @param workers        number of workers (threads) in the pool.
      *                          If this value is 0, the number of workers is equal to the number of processors.
      *                          If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
      *                          the number of workers will be truncated.
-     * @param timestampProvider timestamp provider
      */
     public SnowflakeGeneratorPool(
-        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
-        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
-        @Range(from = 0, to = MAX_WORKER_ID) int initialWorkers,
-        @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset,
-        @Nullable TimestampProvider timestampProvider
+        @NotNull SnowflakeGeneratorFactory factory,
+        @Range(from = 1, to = MAX_WORKER_ID + 1) int workers,
+        @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset
     ) {
-        if (initialWorkers > maxWorkers) {
-            throw new IllegalArgumentException("initialWorkers must be between 0 and maxWorkers");
-        }
-        SnowflakeGeneratorFactory snowflakeGeneratorFactory = new SnowflakeGeneratorFactory(epoch, dataCenterId, timestampProvider);
         this.executorService = new ThreadPoolExecutor(
-            initialWorkers,
-            maxWorkers,
-            3L,
+            workers,
+            workers,
+            0L,
             TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(1),
-            new SnowflakeThreadFactory(workerIdOffset, maxWorkers, snowflakeGeneratorFactory)
+            new LinkedBlockingQueue<>(),
+            new SnowflakeWorkerFactory(workerIdOffset, workers, factory)
         );
     }
 
     public SnowflakeGeneratorPool(
-        @Range(from = 0, to = Long.MAX_VALUE) long epoch,
-        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 1, to = MAX_WORKER_ID + 1) int maxWorkers,
-        @Nullable TimestampProvider timestampProvider
+        @NotNull SnowflakeGeneratorFactory factory,
+        @Range(from = 1, to = MAX_WORKER_ID + 1) int workers
     ) {
-        this(epoch, dataCenterId, maxWorkers, 0, 0, timestampProvider);
+        this(factory, workers, 0);
+    }
+
+    public SnowflakeGeneratorPool(
+        @NotNull SnowflakeGeneratorFactory factory
+    ) {
+        this(factory, Runtime.getRuntime().availableProcessors());
     }
 
     /**
@@ -70,6 +65,7 @@ public class SnowflakeGeneratorPool {
      */
     public Snowflake generate() {
         try {
+            counter.incrementAndGet();
             return generateAsync().get();
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
@@ -80,7 +76,12 @@ public class SnowflakeGeneratorPool {
     }
 
     public Future<Snowflake> generateAsync() {
-        return executorService.submit(() -> SnowflakeWorkerThread.getCurrentThread().getWorker().work());
+        SnowflakeGeneratorTask task = new SnowflakeGeneratorTask();
+        return executorService.submit(task);
+    }
+
+    public long getGeneratedCount() {
+        return counter.get();
     }
 
 }

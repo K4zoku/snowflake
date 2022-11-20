@@ -17,7 +17,7 @@ public class CounterBlockingTimestampProvider implements TimestampProvider {
     }
 
     public CounterBlockingTimestampProvider() {
-        this(TimestampProvider.system(), 10);
+        this(TimestampProvider.system(), 4096);
     }
 
     @Override
