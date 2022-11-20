@@ -24,11 +24,11 @@ public class SnowflakeGeneratorPool {
     /**
      * Create a pool of {@link SnowflakeGenerator}.
      *
-     * @param factory           factory to create {@link SnowflakeGenerator}
-     * @param workers        number of workers (threads) in the pool.
-     *                          If this value is 0, the number of workers is equal to the number of processors.
-     *                          If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
-     *                          the number of workers will be truncated.
+     * @param factory factory to create {@link SnowflakeGenerator}
+     * @param workers number of workers (threads) in the pool.
+     *                If this value is 0, the number of workers is equal to the number of processors.
+     *                If this value is greater than {@link SnowflakeGenerator#MAX_WORKER_ID},
+     *                the number of workers will be truncated.
      */
     public SnowflakeGeneratorPool(
         @NotNull SnowflakeGeneratorFactory factory,
