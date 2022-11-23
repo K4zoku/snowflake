@@ -22,6 +22,8 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
     public static final String SNOWFLAKE_WORKERS = "snowflake.workers";
     public static final String SNOWFLAKE_TIMESTAMP_PROVIDER = "snowflake.timestampProvider";
 
+    public static final String GENERATOR_NAME = "Snowflake";
+
     private SnowflakeGeneratorPool generator;
     private boolean longValue = false;
 
@@ -44,7 +46,7 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
                 new MappingException(String.format("Parameter '%s' is required", SNOWFLAKE_DATA_CENTER_ID)));
         int workers = Optional.ofNullable(params.getProperty(SNOWFLAKE_WORKERS))
             .map(Integer::parseInt)
-            .orElse(Runtime.getRuntime().availableProcessors());
+            .orElse(SnowflakeGenerator.MAX_WORKER_ID + 1);
         TimestampProvider timestampProvider = TimestampProvider.getInstance(params.getProperty(SNOWFLAKE_TIMESTAMP_PROVIDER));
         SnowflakeGeneratorFactory factory = SnowflakeGeneratorFactory.builder()
             .epoch(epoch)
@@ -57,7 +59,7 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
     @Override
     public Serializable generate(SharedSessionContractImplementor session, Object object) {
         Snowflake snowflake = generator.generate();
-        return longValue ? snowflake.getAsLong() : snowflake;
+        return longValue ? snowflake.longValue() : snowflake;
     }
 
 

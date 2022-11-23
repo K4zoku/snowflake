@@ -1,19 +1,19 @@
 package io.gitlab.k4zoku.snowflake;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.*;
 
-public class Snowflake implements Comparable<Snowflake>, Serializable {
+public class Snowflake extends Number implements Comparable<Snowflake> {
 
     private static final long serialVersionUID = 0L;
+    public static final long MIN_VALUE = 0L;
 
     private final long value;
 
     public Snowflake(long value) {
-        if (value < 4194304) {
+        if (value < MIN_VALUE) {
             throw new IllegalArgumentException(String.format("'%d' doesn't look like a snowflake. Snowflakes are much larger numbers.", value));
         }
         this.value = value;
@@ -25,10 +25,6 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
 
     public static Snowflake of(String id) {
         return new Snowflake(Long.parseLong(id));
-    }
-
-    public long getAsLong() {
-        return value;
     }
 
     public long getTimestamp(long epoch) {
@@ -85,5 +81,25 @@ public class Snowflake implements Comparable<Snowflake>, Serializable {
     @Override
     public int compareTo(Snowflake o) {
         return Long.compare(value, o.value);
+    }
+
+    @Override
+    public int intValue() {
+        return (int) value;
+    }
+
+    @Override
+    public long longValue() {
+        return value;
+    }
+
+    @Override
+    public float floatValue() {
+        return value;
+    }
+
+    @Override
+    public double doubleValue() {
+        return value;
     }
 }

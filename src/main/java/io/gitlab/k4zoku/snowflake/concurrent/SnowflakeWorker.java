@@ -8,7 +8,7 @@ public class SnowflakeWorker extends Thread {
     private final SnowflakeGenerator generator;
 
     public SnowflakeWorker(SnowflakeGenerator generator, Runnable target) {
-        super(target);
+        super(target, String.format("SnowflakeWorker[%02d/%02d]", generator.getDataCenterId(), generator.getWorkerId()));
         this.setDaemon(true);
         this.generator = generator;
     }

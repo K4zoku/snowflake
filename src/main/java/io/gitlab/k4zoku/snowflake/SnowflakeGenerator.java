@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Range;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -21,8 +23,8 @@ import java.util.Objects;
  * This class is <b>thread-safe</b>.
  * </p>
  * <details>
- * <summary>Structure of a snowflake:</summary>
- * <pre>
+ *     <summary>Structure of a snowflake:</summary>
+ *     <pre>
  *         0 00000000000000000000000000000000000000000 00000 00000 000000000000
  *         1 2                                         3     4     5
  *     </pre>
@@ -104,37 +106,46 @@ import java.util.Objects;
  */
 public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGenerator> {
 
+    // <editor-fold desc="Constants" defaultstate="collapsed">
     private static final long serialVersionUID = 0L;
 
-    // LENGTHS
-    public static final long TIMESTAMP_BITS = 41L;
-    public static final long DATA_CENTER_ID_BITS = 5L;
-    public static final long WORKER_ID_BITS = 5L;
-    public static final long SEQUENCE_BITS = 12L;
+    // <editor-fold desc="Component Lengths" defaultstate="collapsed">
+    public static final int TIMESTAMP_BITS = 41;
+    public static final int DATA_CENTER_ID_BITS = 5;
+    public static final int WORKER_ID_BITS = 5;
+    public static final int SEQUENCE_BITS = 12;
+    // </editor-fold>
 
-    // MAX VALUES
+    // <editor-fold desc="Component max values" defaultstate="collapsed">
     public static final long MAX_TIMESTAMP = ~(-1L << TIMESTAMP_BITS);
-    public static final long MAX_DATA_CENTER_ID = ~(-1L << DATA_CENTER_ID_BITS);
-    public static final long MAX_WORKER_ID = ~(-1L << WORKER_ID_BITS);
-    public static final long MAX_SEQUENCE = ~(-1L << SEQUENCE_BITS);
+    public static final int MAX_DATA_CENTER_ID = ~(-1 << DATA_CENTER_ID_BITS);
+    public static final int MAX_WORKER_ID = ~(-1 << WORKER_ID_BITS);
+    public static final int MAX_SEQUENCE = ~(-1 << SEQUENCE_BITS);
+    // </editor-fold>
 
-    // OFFSETS
-    public static final long TIMESTAMP_SHIFT = DATA_CENTER_ID_BITS + WORKER_ID_BITS + SEQUENCE_BITS;
-    public static final long DATA_CENTER_ID_SHIFT = WORKER_ID_BITS + SEQUENCE_BITS;
-    public static final long WORKER_ID_SHIFT = SEQUENCE_BITS;
+    // <editor-fold desc="Component shifts" defaultstate="collapsed">
+    public static final int TIMESTAMP_SHIFT = DATA_CENTER_ID_BITS + WORKER_ID_BITS + SEQUENCE_BITS;
+    public static final int DATA_CENTER_ID_SHIFT = WORKER_ID_BITS + SEQUENCE_BITS;
+    public static final int WORKER_ID_SHIFT = SEQUENCE_BITS;
+    // </editor-fold>
 
-    // MASKS
+    // <editor-fold desc="Component masks" defaultstate="collapsed">
     public static final long TIMESTAMP_MASK = MAX_TIMESTAMP << TIMESTAMP_SHIFT;
     public static final long DATA_CENTER_ID_MASK = MAX_DATA_CENTER_ID << DATA_CENTER_ID_SHIFT;
     public static final long WORKER_ID_MASK = MAX_WORKER_ID << WORKER_ID_SHIFT;
     public static final long SEQUENCE_MASK = MAX_SEQUENCE;
+    // </editor-fold>
 
-    // DEFAULT VALUES
+    // <editor-fold desc="Epoch constants" defaultstate="collapsed">
     public static final long DISCORD_EPOCH = 1420070400000L; // Equivalent to 2015-01-01T00:00:00+00:00, the epoch of Discord (https://discord.com/developers/docs/reference#snowflakes)
     public static final long AUTHOR_EPOCH = 1640995200000L; // Equivalent to 2022-01-01T00:00:00+00:00, the epoch of the author of this library
-    private static long defaultEpoch = DISCORD_EPOCH; // Default epoch is the epoch of Discord
-    public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = TimestampProvider.system(); // Using System.currentTimeMillis()
+    // </editor-fold>
 
+    // <editor-fold desc="Default values" defaultstate="collapsed">
+    public static final TimestampProvider DEFAULT_TIMESTAMP_PROVIDER = TimestampProvider.system(); // Using System.currentTimeMillis()
+    private static long defaultEpoch = DISCORD_EPOCH; // Default epoch is the epoch of Discord
+
+    // <editor-fold desc="Default epoch accessors" defaultstate="collapsed">
     public static void setDefaultEpoch(long epoch) {
         if (epoch < 0) {
             throw new IllegalArgumentException("Epoch cannot be negative.");
@@ -145,17 +156,25 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     public static long getDefaultEpoch() {
         return defaultEpoch;
     }
+    // Default epoch accessors </editor-fold>
 
-    // INSTANCE FIELDS
+    // </editor-fold>
+    // </editor-fold>
+
+    // <editor-fold desc="Instance fields" defaultstate="collapsed">
     private final long epoch;
-    private final long dataCenterId;
-    private final long workerId;
-    private volatile long sequence = 0L;
+    private final int dataCenterId;
+    private final int workerId;
+    private volatile int sequence = 0;
 
-    private final long template; // pre-computed snowflake template with initialized data center ID and worker ID
+    private final int template; // pre-computed snowflake template with initialized data center ID and worker ID, max length: 12 + 5 + 5 = 22 bits
 
-    private transient volatile long lastTimestamp = -1L;
+    private volatile long lastTimestamp = -1L;
     private transient TimestampProvider timestampProvider;
+
+    // </editor-fold>
+
+    // <editor-fold desc="Constructors">
 
     /**
      * Create a snowflake generator with custom epoch and timestamp provider.
@@ -167,8 +186,8 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      */
     public SnowflakeGenerator(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
-        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) long workerId,
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) int dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) int workerId,
         @Nullable TimestampProvider timestampProvider
     ) {
         this.epoch = epoch;
@@ -187,8 +206,8 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      */
     public SnowflakeGenerator(
         @Range(from = 0, to = Long.MAX_VALUE) long epoch,
-        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) long workerId
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) int dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) int workerId
     ) {
         this(epoch, dataCenterId, workerId, DEFAULT_TIMESTAMP_PROVIDER);
     }
@@ -200,11 +219,14 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      * @param workerId     The worker ID of the snowflake generator. Out of range value will be truncated.
      */
     public SnowflakeGenerator(
-        @Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId,
-        @Range(from = 0, to = MAX_WORKER_ID) long workerId
+        @Range(from = 0, to = MAX_DATA_CENTER_ID) int dataCenterId,
+        @Range(from = 0, to = MAX_WORKER_ID) int workerId
     ) {
         this(defaultEpoch, dataCenterId, workerId);
     }
+    // </editor-fold>
+
+    // <editor-fold desc="Accessors" defaultstate="collapsed">
 
     /**
      * Gets the epoch of the snowflake generator.
@@ -220,7 +242,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      *
      * @return The data center ID of the snowflake generator.
      */
-    public long getDataCenterId() {
+    public int getDataCenterId() {
         return dataCenterId;
     }
 
@@ -238,7 +260,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      *
      * @return The timestamp provider of the snowflake generator.
      */
-    public TimestampProvider getTimestampProvider() {
+    public synchronized TimestampProvider getTimestampProvider() {
         return timestampProvider;
     }
 
@@ -247,13 +269,10 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
      *
      * @param timestampProvider The timestamp provider of the snowflake generator.
      */
-    public void setTimestampProvider(TimestampProvider timestampProvider) {
+    public synchronized void setTimestampProvider(TimestampProvider timestampProvider) {
         this.timestampProvider = timestampProvider;
     }
-
-    public long getLastTimestamp() {
-        return lastTimestamp;
-    }
+    // </editor-fold>
 
     /**
      * Generates a Snowflake.
@@ -279,11 +298,7 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
         return new Snowflake(value);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(epoch, dataCenterId, workerId);
-    }
-
+    // <editor-fold desc="equals and hashCode" defaultstate="collapsed">
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -299,6 +314,13 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(epoch, dataCenterId, workerId);
+    }
+    // </editor-fold>
+
+    // <editor-fold desc="Comparable" defaultstate="collapsed">
+    @Override
     public int compareTo(@NotNull SnowflakeGenerator o) {
         int result = Long.compare(epoch, o.epoch);
         if (result != 0) {
@@ -310,4 +332,19 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
         }
         return Long.compare(workerId, o.workerId);
     }
+    // </editor-fold>
+
+    // <editor-fold desc="Stream API" defaultstate="collapsed">
+    public Stream<Snowflake> stream() {
+        return Stream.generate(this::generate);
+    }
+
+    public Stream<Snowflake> stream(long count) {
+        return stream().limit(count);
+    }
+
+    public LongStream longStream() {
+        return stream().mapToLong(Snowflake::longValue);
+    }
+    // </editor-fold>
 }

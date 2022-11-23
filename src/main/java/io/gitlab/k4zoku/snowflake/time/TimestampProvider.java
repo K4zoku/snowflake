@@ -25,7 +25,6 @@ public interface TimestampProvider extends Serializable {
             return system();
         }
         try {
-            System.out.println("Loading " + className);
             Class<? extends TimestampProvider> clazz = Class.forName(className).asSubclass(TimestampProvider.class);
             Constructor<? extends TimestampProvider> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);

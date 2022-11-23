@@ -11,7 +11,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SnowflakeGeneratorPoolTest {
 
@@ -25,17 +26,16 @@ class SnowflakeGeneratorPoolTest {
 
     @Execution(ExecutionMode.CONCURRENT)
     @ParameterizedTest
-    @ValueSource(ints = {65536, 65536 * 2, 65536 * 4, 65536 * 8, 65536 * 16, 65536 * 32, 65536 * 64, 65536 * 128})
+    @ValueSource(ints = {65536, 131072, 262144, 524288, 1048576, 2097152})
     void multiThreadGenerateTest(int n) throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         for (int i = 0; i < n; i++) {
             executor.submit(() -> {
                 Snowflake snowflake = pool.generate();
-                assertNotEquals(0, snowflake.getAsLong());
+                assertNotEquals(0, snowflake.longValue());
             });
         }
         executor.shutdown();
         assertTrue(executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS));
-        assertEquals(n, pool.getGeneratedCount());
     }
 }

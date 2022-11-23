@@ -4,13 +4,13 @@ import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 
 public class SnowflakeGeneratorFactory {
     private final long epoch;
-    private final long dataCenterId;
+    private final int dataCenterId;
     private final TimestampProvider timestampProvider;
 
     SnowflakeGeneratorFactory(
         TimestampProvider timestampProvider,
         long epoch,
-        long dataCenterId
+        int dataCenterId
     ) {
         this.epoch = epoch;
         this.dataCenterId = dataCenterId;
@@ -21,7 +21,7 @@ public class SnowflakeGeneratorFactory {
         return new SnowflakeGeneratorFactoryBuilder();
     }
 
-    public SnowflakeGenerator create(long workerId) {
+    public SnowflakeGenerator create(int workerId) {
         return new SnowflakeGenerator(epoch, dataCenterId, workerId, timestampProvider);
     }
 }

@@ -2,61 +2,66 @@ package io.gitlab.k4zoku.snowflake.hibernate.test;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
-import io.gitlab.k4zoku.snowflake.hibernate.test.entity.TestEntity;
+import io.gitlab.k4zoku.snowflake.hibernate.test.entity.SnowflakeEntity;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javax.transaction.Transactional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SnowflakeHibernateGeneratorTest {
 
-    Session session;
+    static SessionFactory sessionFactory;
+    static Session session;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
         SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
-        Configuration configuration = new Configuration()
-            .configure()
-            .addAnnotatedClass(TestEntity.class)
-            .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
+        Configuration configuration = new Configuration().configure();
         ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
             .build();
-        SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+        MetadataSources metadataSources = new MetadataSources(serviceRegistry);
+        metadataSources.addAnnotatedClass(SnowflakeEntity.class);
+        Metadata metadata = metadataSources.buildMetadata();
+        sessionFactory = metadata.buildSessionFactory();
         session = sessionFactory.openSession();
         session.beginTransaction();
     }
 
+    @AfterAll
+    static void tearDown() {
+        session.getTransaction().commit();
+        session.close();
+        sessionFactory.close();
+    }
+
     @Test
+    @Transactional
     void test() {
-        TestEntity testEntity = new TestEntity();
-        testEntity.setName("test 1");
+        SnowflakeEntity snowflakeEntity = new SnowflakeEntity();
 
-        TestEntity testEntity2 = new TestEntity();
-        testEntity2.setName("test 2");
+        SnowflakeEntity snowflakeEntity2 = new SnowflakeEntity();
+        session.persist(snowflakeEntity);
+        session.persist(snowflakeEntity2);
 
-        session.persist(testEntity);
-        session.persist(testEntity2);
+        System.out.printf("Persisted entity %s: %s%n", snowflakeEntity.getId(), snowflakeEntity.getId().toFormattedString());
+        System.out.printf("Persisted entity %s: %s%n", snowflakeEntity2.getId(), snowflakeEntity2.getId().toFormattedString());
 
-        System.out.printf("Persisted entity %s: %s%n", testEntity.getId(), testEntity.getId().toFormattedString());
-        System.out.printf("Persisted entity %s: %s%n", testEntity2.getId(), testEntity2.getId().toFormattedString());
+        assertNotEquals(snowflakeEntity.getId(), snowflakeEntity2.getId());
 
-        assertNotEquals(testEntity.getId(), testEntity2.getId());
+        System.out.println("Entity 1 worker ID: " + snowflakeEntity.getId().getWorkerId());
+        System.out.println("Entity 2 worker ID: " + snowflakeEntity2.getId().getWorkerId());
 
-        System.out.println("Entity 1 worker ID: " + testEntity.getId().getWorkerId());
-        System.out.println("Entity 2 worker ID: " + testEntity2.getId().getWorkerId());
-
-        Snowflake id1 = testEntity.getId();
-        Snowflake id2 = testEntity2.getId();
+        Snowflake id1 = snowflakeEntity.getId();
+        Snowflake id2 = snowflakeEntity2.getId();
         if (id1.getTimestamp() == id2.getTimestamp()) {
             System.out.println("The timestamps of the two IDs are equal");
             if (id1.getWorkerId() == id2.getWorkerId()) {
@@ -74,37 +79,6 @@ class SnowflakeHibernateGeneratorTest {
             assertTrue(id1.getTimestamp() < id2.getTimestamp());
             assertEquals(0, id1.getSequence());
             assertEquals(0, id2.getSequence());
-        }
-    }
-
-    @Test
-    @Transactional
-    void testMultiple() {
-        SnowflakeGenerator.setDefaultEpoch(SnowflakeGenerator.AUTHOR_EPOCH);
-        Configuration configuration = new Configuration()
-            .configure()
-            .addAnnotatedClass(TestEntity.class)
-            .addPackage("io.gitlab.k4zoku.snowflake.hibernate.test.entity");
-        ServiceRegistry serviceRegistry = configuration.getStandardServiceRegistryBuilder()
-            .build();
-        SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-        ExecutorService executor = new ThreadPoolExecutor(32, 32, 1L, MINUTES, new LinkedBlockingQueue<>());
-        for (int i = 0; i < 64; i++) {
-            final int j = i;
-            Session session = sessionFactory.openSession();
-            session.beginTransaction();
-            TestEntity testEntity = new TestEntity();
-            testEntity.setName("test " + j);
-            session.persist(testEntity);
-            System.out.printf("Persisted entity %s: %s%n", testEntity.getId(), testEntity.getId().toFormattedString());
-            session.close();
-        }
-        executor.shutdown();
-        try {
-            assertTrue(executor.awaitTermination(1000, MINUTES));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("Interrupted while waiting for executor to terminate");
         }
     }
 

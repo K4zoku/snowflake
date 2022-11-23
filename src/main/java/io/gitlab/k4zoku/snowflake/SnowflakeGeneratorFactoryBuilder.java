@@ -9,7 +9,7 @@ import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_DATA_CENTER_ID;
 
 public class SnowflakeGeneratorFactoryBuilder {
     private long epoch = SnowflakeGenerator.DISCORD_EPOCH;
-    private long dataCenterId = 0;
+    private int dataCenterId = 0;
     private TimestampProvider timestampProvider = TimestampProvider.system();
 
     SnowflakeGeneratorFactoryBuilder() {
@@ -22,7 +22,7 @@ public class SnowflakeGeneratorFactoryBuilder {
     }
 
     @Contract("_ -> this")
-    public SnowflakeGeneratorFactoryBuilder dataCenterId(@Range(from = 0, to = MAX_DATA_CENTER_ID) long dataCenterId) {
+    public SnowflakeGeneratorFactoryBuilder dataCenterId(@Range(from = 0, to = MAX_DATA_CENTER_ID) int dataCenterId) {
         this.dataCenterId = dataCenterId;
         return this;
     }

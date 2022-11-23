@@ -23,7 +23,7 @@ class SnowflakeGeneratorTest {
     @Test
     void testGeneratorSetting() {
         Snowflake snowflake = generator.generate();
-        assertNotEquals(0, snowflake.getAsLong());
+        assertNotEquals(0, snowflake.longValue());
         assertEquals(snowflake.getTimestamp(generator.getEpoch()), snowflake.getTimestamp());
         assertEquals(generator.getDataCenterId(), snowflake.getDataCenterId());
         assertEquals(generator.getWorkerId(), snowflake.getWorkerId());

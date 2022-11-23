@@ -31,10 +31,4 @@ public class SnowflakeGeneratorPoolBenchmark {
     public void snowflakeGenerateBenchmarkSingleThread() {
         pool.generate();
     }
-
-    @TearDown
-    public void tearDown() {
-        System.out.println();
-        System.out.println("Total snowflake generated: " + pool.getGeneratedCount());
-    }
 }
