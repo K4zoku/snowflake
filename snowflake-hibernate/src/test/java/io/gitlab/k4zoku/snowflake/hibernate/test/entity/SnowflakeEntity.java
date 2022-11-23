@@ -15,7 +15,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.Objects;
 
-import static io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator.GENERATOR_NAME;
 import static io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator.SNOWFLAKE_DATA_CENTER_ID;
 
 @Entity
@@ -23,7 +22,7 @@ import static io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator.S
 @Setter
 @GenericGenerator(
     name = "TestEntitySnowflake",
-    strategy = GENERATOR_NAME,
+    strategy = "io.gitlab.k4zoku.snowflake.hibernate.SnowflakeHibernateGenerator",
     parameters = {
         @Parameter(name = SNOWFLAKE_DATA_CENTER_ID, value = "1")
     }
