@@ -3,7 +3,7 @@ package io.gitlab.k4zoku.snowflake.parallel;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 
-class SnowflakeWorker extends Thread {
+public class SnowflakeWorker extends Thread {
 
     private final SnowflakeGenerator generator;
 

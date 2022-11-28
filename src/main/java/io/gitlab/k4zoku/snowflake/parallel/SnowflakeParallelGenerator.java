@@ -4,12 +4,15 @@ import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
 import io.gitlab.k4zoku.snowflake.common.Generator;
+import io.gitlab.k4zoku.snowflake.parallel.task.SnowflakeConsumeTask;
+import io.gitlab.k4zoku.snowflake.parallel.task.SnowflakeGenerateTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -69,7 +72,7 @@ public class SnowflakeParallelGenerator implements Generator<Snowflake>, AutoClo
      */
     public Snowflake generate() {
         try {
-            return executorService.submit(new SnowflakeWorkerTask()).get();
+            return executorService.submit(new SnowflakeGenerateTask()).get();
         } catch (ExecutionException e) {
             throw new IllegalStateException(e);
         } catch (InterruptedException e) {
@@ -93,6 +96,20 @@ public class SnowflakeParallelGenerator implements Generator<Snowflake>, AutoClo
             Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL |
                 Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.CONCURRENT
         );
+    }
+
+    @Override
+    public void forEach(Consumer<? super Snowflake> action) {
+        while (!isClosed()) {
+            executorService.submit(new SnowflakeConsumeTask(action));
+        }
+    }
+
+    public Future<Void> forEachAsync(Consumer<? super Snowflake> action) {
+        FutureTask<Void> futureTask = new FutureTask<>(() -> forEach(action), null);
+        Thread forEachThread = new Thread(futureTask);
+        forEachThread.start();
+        return futureTask;
     }
 
     @Override

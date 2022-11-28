@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
-class SnowflakeWorkerFactory implements ThreadFactory {
+public class SnowflakeWorkerFactory implements ThreadFactory {
     private final int maxWorkers;
     private final AtomicInteger counter;
     private final int offset;
