@@ -1,6 +1,6 @@
 package io.gitlab.k4zoku.snowflake;
 
-import io.gitlab.k4zoku.snowflake.concurrent.SnowflakeGeneratorPool;
+import io.gitlab.k4zoku.snowflake.parallel.SnowflakeParallelGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class SnowflakeGeneratorPoolTest {
+class SnowflakeParallelGeneratorTest {
 
-    SnowflakeGeneratorPool pool;
+    SnowflakeParallelGenerator pool;
 
     @BeforeEach
     void setUp() {
         SnowflakeGeneratorFactory factory = SnowflakeGeneratorFactory.builder().dataCenterId(26).build();
-        pool = new SnowflakeGeneratorPool(factory, 32);
+        pool = new SnowflakeParallelGenerator(factory, 32);
     }
 
     @Execution(ExecutionMode.CONCURRENT)

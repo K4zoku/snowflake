@@ -1,5 +1,6 @@
 package io.gitlab.k4zoku.snowflake;
 
+import io.gitlab.k4zoku.snowflake.common.Generator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -8,8 +9,8 @@ import org.jetbrains.annotations.Range;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import java.util.Spliterator;
+import java.util.Spliterators;
 
 /**
  * <p>
@@ -104,7 +105,7 @@ import java.util.stream.Stream;
  * @see <a href="https://discord.com">Discord</a>
  * @see <a href="https://discord.com/developers/docs/reference#snowflakes">Discord Snowflakes</a>
  */
-public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGenerator> {
+public class SnowflakeGenerator implements Generator<Snowflake>, Comparable<SnowflakeGenerator>, Serializable {
 
     // <editor-fold desc="Constants" defaultstate="collapsed">
     private static final long serialVersionUID = 0L;
@@ -335,16 +336,10 @@ public class SnowflakeGenerator implements Serializable, Comparable<SnowflakeGen
     // </editor-fold>
 
     // <editor-fold desc="Stream API" defaultstate="collapsed">
-    public Stream<Snowflake> stream() {
-        return Stream.generate(this::generate);
-    }
 
-    public Stream<Snowflake> stream(long count) {
-        return stream().limit(count);
-    }
-
-    public LongStream longStream() {
-        return stream().mapToLong(Snowflake::longValue);
+    @Override
+    public Spliterator<Snowflake> spliterator() {
+        return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.DISTINCT | Spliterator.SORTED);
     }
     // </editor-fold>
 }

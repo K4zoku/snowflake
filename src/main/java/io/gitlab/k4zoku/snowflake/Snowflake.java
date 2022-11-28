@@ -1,50 +1,62 @@
 package io.gitlab.k4zoku.snowflake;
 
+import org.jetbrains.annotations.Range;
+
+import java.text.MessageFormat;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Formattable;
+import java.util.FormattableFlags;
+import java.util.Formatter;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.*;
 
-public class Snowflake extends Number implements Comparable<Snowflake> {
+public class Snowflake extends Number implements Comparable<Snowflake>, Formattable {
 
     private static final long serialVersionUID = 0L;
-    public static final long MIN_VALUE = 0L;
 
     private final long value;
 
+    public Snowflake() {
+        this.value = 0L;
+    }
+
     public Snowflake(long value) {
-        if (value < MIN_VALUE) {
-            throw new IllegalArgumentException(String.format("'%d' doesn't look like a snowflake. Snowflakes are much larger numbers.", value));
-        }
         this.value = value;
     }
 
-    public static Snowflake of(long id) {
-        return new Snowflake(id);
+    public static Snowflake of(long value) {
+        return new Snowflake(value);
     }
 
-    public static Snowflake of(String id) {
-        return new Snowflake(Long.parseLong(id));
+    public static Snowflake of(String value) {
+        return new Snowflake(Long.parseLong(value));
     }
 
-    public long getTimestamp(long epoch) {
+    @Range(from = 0, to = Long.MAX_VALUE)
+    public long getTimestamp(@Range(from = 0, to = Long.MAX_VALUE) long epoch) {
         return ((value & TIMESTAMP_MASK) >> TIMESTAMP_SHIFT) + epoch;
     }
 
+    @Range(from = 0, to = Long.MAX_VALUE)
     public long getTimestamp() {
         return getTimestamp(getDefaultEpoch());
     }
 
-    public long getDataCenterId() {
-        return (value & DATA_CENTER_ID_MASK) >> DATA_CENTER_ID_SHIFT;
+    @Range(from = 0, to = MAX_DATA_CENTER_ID)
+    public byte getDataCenterId() {
+        return (byte) ((value & DATA_CENTER_ID_MASK) >> DATA_CENTER_ID_SHIFT);
     }
 
-    public long getWorkerId() {
-        return (value & WORKER_ID_MASK) >> WORKER_ID_SHIFT;
+    @Range(from = 0, to = MAX_WORKER_ID)
+    public byte getWorkerId() {
+        return (byte) ((value & WORKER_ID_MASK) >> WORKER_ID_SHIFT);
     }
 
-    public long getSequence() {
-        return value & SEQUENCE_MASK;
+    @Range(from = 0, to = MAX_SEQUENCE)
+    public short getSequence() {
+        return (short) (value & SEQUENCE_MASK);
     }
 
     @Override
@@ -67,15 +79,6 @@ public class Snowflake extends Number implements Comparable<Snowflake> {
     @Override
     public String toString() {
         return Long.toString(value);
-    }
-
-    public String toFormattedString() {
-        return String.format("[%-24s] [%02d/%02d] #%04d",
-            Instant.ofEpochMilli(getTimestamp()).atOffset(ZoneOffset.UTC),
-            getDataCenterId(),
-            getWorkerId(),
-            getSequence()
-        );
     }
 
     @Override
@@ -101,5 +104,20 @@ public class Snowflake extends Number implements Comparable<Snowflake> {
     @Override
     public double doubleValue() {
         return value;
+    }
+
+    @Override
+    public void formatTo(Formatter formatter, int flags, int width, int precision) {
+        boolean alternate = (flags ^ FormattableFlags.ALTERNATE) == 0;
+        boolean leftJustify = (flags ^ FormattableFlags.LEFT_JUSTIFY) == 0;
+        int multiple = leftJustify ? -1 : 1;
+        if (alternate) {
+            boolean upperCase = (flags ^ FormattableFlags.UPPERCASE) == 0;
+            String format = MessageFormat.format("[%{0}{1}] @%{2}{3}d^%{4}{5}d #%{6}{7}d", multiple * 24, upperCase ? 'S' : 's', precision < 0 ? '0' : '\0', multiple * 2, precision < 0 ? '0' : '\0', multiple * 2, precision < 0 ? '0' : '\0', multiple * 4);
+            OffsetDateTime timestamp = Instant.ofEpochMilli(getTimestamp()).atOffset(ZoneOffset.UTC);
+            formatter.format(format, timestamp, getDataCenterId(), getWorkerId(), getSequence());
+        } else {
+            formatter.format(MessageFormat.format("%{0}s", multiple * width), Long.toUnsignedString(value));
+        }
     }
 }

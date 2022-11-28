@@ -1,22 +1,27 @@
-package io.gitlab.k4zoku.snowflake.concurrent;
+package io.gitlab.k4zoku.snowflake.parallel;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
+import io.gitlab.k4zoku.snowflake.common.Generator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
 /**
- * Pool of {@link SnowflakeGenerator}. Use this class if you want to generate snowflakes in multiple threads.
+ * Provides a parallel generator of {@link Snowflake}.
  *
  * @author k4zoku
  * @since 1.0
  */
-public class SnowflakeGeneratorPool {
+public class SnowflakeParallelGenerator implements Generator<Snowflake>, AutoCloseable {
     private final ExecutorService executorService;
 
     /**
@@ -29,7 +34,7 @@ public class SnowflakeGeneratorPool {
      *                       the number of workers will be truncated.
      * @param workerIdOffset offset of worker ID. In other words, the first worker ID is {@code workerIdOffset}.
      */
-    public SnowflakeGeneratorPool(
+    public SnowflakeParallelGenerator(
         @NotNull SnowflakeGeneratorFactory factory,
         @Range(from = 1, to = MAX_WORKER_ID + 1) int workers,
         @Range(from = 0, to = MAX_WORKER_ID) int workerIdOffset
@@ -44,14 +49,14 @@ public class SnowflakeGeneratorPool {
         );
     }
 
-    public SnowflakeGeneratorPool(
+    public SnowflakeParallelGenerator(
         @NotNull SnowflakeGeneratorFactory factory,
         @Range(from = 1, to = MAX_WORKER_ID + 1) int workers
     ) {
         this(factory, workers, 0);
     }
 
-    public SnowflakeGeneratorPool(
+    public SnowflakeParallelGenerator(
         @NotNull SnowflakeGeneratorFactory factory
     ) {
         this(factory, MAX_WORKER_ID + 1, 0);
@@ -71,6 +76,33 @@ public class SnowflakeGeneratorPool {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    public void close() {
+        executorService.shutdown();
+    }
+
+    public boolean isClosed() {
+        return executorService.isTerminated();
+    }
+
+    @Override
+    public Spliterator<Snowflake> spliterator() {
+        return Spliterators.spliteratorUnknownSize(iterator(),
+            Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL |
+                Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.CONCURRENT
+        );
+    }
+
+    @Override
+    public Stream<Snowflake> stream() {
+        return StreamSupport.stream(spliterator(), true);
+    }
+
+    @Override
+    public Stream<Snowflake> stream(long maxSize) {
+        return StreamSupport.stream(spliterator(), true).limit(maxSize);
     }
 
 }

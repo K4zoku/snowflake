@@ -3,7 +3,7 @@ package io.gitlab.k4zoku.snowflake.hibernate;
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
-import io.gitlab.k4zoku.snowflake.concurrent.SnowflakeGeneratorPool;
+import io.gitlab.k4zoku.snowflake.parallel.SnowflakeParallelGenerator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.hibernate.MappingException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
@@ -22,9 +22,7 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
     public static final String SNOWFLAKE_WORKERS = "snowflake.workers";
     public static final String SNOWFLAKE_TIMESTAMP_PROVIDER = "snowflake.timestampProvider";
 
-    public static final String GENERATOR_NAME = "Snowflake";
-
-    private SnowflakeGeneratorPool generator;
+    private SnowflakeParallelGenerator generator;
     private boolean longValue = false;
 
     @Override
@@ -53,7 +51,7 @@ public class SnowflakeHibernateGenerator implements IdentifierGenerator {
             .dataCenterId(dataCenterId)
             .timestampProvider(timestampProvider)
             .build();
-        generator = new SnowflakeGeneratorPool(factory, workers);
+        generator = new SnowflakeParallelGenerator(factory, workers);
     }
 
     @Override

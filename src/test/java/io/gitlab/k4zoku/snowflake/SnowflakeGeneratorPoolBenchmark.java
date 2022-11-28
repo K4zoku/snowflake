@@ -1,6 +1,6 @@
 package io.gitlab.k4zoku.snowflake;
 
-import io.gitlab.k4zoku.snowflake.concurrent.SnowflakeGeneratorPool;
+import io.gitlab.k4zoku.snowflake.parallel.SnowflakeParallelGenerator;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 1)
 public class SnowflakeGeneratorPoolBenchmark {
 
-    private SnowflakeGeneratorPool pool;
+    private SnowflakeParallelGenerator pool;
 
     @Setup
     public void setup() {
         SnowflakeGeneratorFactory factory = SnowflakeGeneratorFactory.builder().dataCenterId(2).build();
-        pool = new SnowflakeGeneratorPool(factory);
+        pool = new SnowflakeParallelGenerator(factory);
     }
 
     @Benchmark

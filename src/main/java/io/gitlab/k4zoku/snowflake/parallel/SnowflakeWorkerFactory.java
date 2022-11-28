@@ -1,4 +1,4 @@
-package io.gitlab.k4zoku.snowflake.concurrent;
+package io.gitlab.k4zoku.snowflake.parallel;
 
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.SnowflakeGeneratorFactory;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.gitlab.k4zoku.snowflake.SnowflakeGenerator.MAX_WORKER_ID;
 
-public class SnowflakeWorkerFactory implements ThreadFactory {
+class SnowflakeWorkerFactory implements ThreadFactory {
     private final int maxWorkers;
     private final AtomicInteger counter;
     private final int offset;

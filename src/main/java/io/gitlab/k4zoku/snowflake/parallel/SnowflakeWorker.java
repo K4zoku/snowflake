@@ -1,9 +1,9 @@
-package io.gitlab.k4zoku.snowflake.concurrent;
+package io.gitlab.k4zoku.snowflake.parallel;
 
 import io.gitlab.k4zoku.snowflake.Snowflake;
 import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 
-public class SnowflakeWorker extends Thread {
+class SnowflakeWorker extends Thread {
 
     private final SnowflakeGenerator generator;
 
