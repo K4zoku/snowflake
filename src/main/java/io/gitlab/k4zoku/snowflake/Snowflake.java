@@ -36,7 +36,7 @@ public class Snowflake extends Number implements Comparable<Snowflake>, Formatta
 
     @Range(from = 0, to = Long.MAX_VALUE)
     public long getTimestamp(@Range(from = 0, to = Long.MAX_VALUE) long epoch) {
-        return ((value & TIMESTAMP_MASK) >> TIMESTAMP_SHIFT) + epoch;
+        return ((value & TIMESTAMP_MASK) >>> TIMESTAMP_SHIFT) + epoch;
     }
 
     @Range(from = 0, to = Long.MAX_VALUE)

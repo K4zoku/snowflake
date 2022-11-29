@@ -108,6 +108,7 @@ public class SnowflakeParallelGenerator implements Generator<Snowflake>, AutoClo
     public Future<Void> forEachAsync(Consumer<? super Snowflake> action) {
         FutureTask<Void> futureTask = new FutureTask<>(() -> forEach(action), null);
         Thread forEachThread = new Thread(futureTask);
+        forEachThread.setDaemon(true);
         forEachThread.start();
         return futureTask;
     }

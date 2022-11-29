@@ -1,6 +1,6 @@
-package io.gitlab.k4zoku.snowflake;
+package io.gitlab.k4zoku.snowflake.benchmark;
 
-import io.gitlab.k4zoku.snowflake.parallel.SnowflakeParallelGenerator;
+import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;
@@ -11,24 +11,22 @@ import java.util.concurrent.TimeUnit;
 @Fork(value = 1, warmups = 1)
 @Warmup(iterations = 1)
 @Measurement(iterations = 1)
-public class SnowflakeGeneratorPoolBenchmark {
-
-    private SnowflakeParallelGenerator pool;
+public class SnowflakeGeneratorBenchmark {
+    private SnowflakeGenerator generator;
 
     @Setup
     public void setup() {
-        SnowflakeGeneratorFactory factory = SnowflakeGeneratorFactory.builder().dataCenterId(2).build();
-        pool = new SnowflakeParallelGenerator(factory);
+        this.generator = new SnowflakeGenerator(3, 0);
     }
 
     @Benchmark
-    @Threads(16)
+    @Threads(Threads.MAX)
     public void snowflakeGenerateBenchmarkMultiThread() {
-        pool.generate();
+
     }
 
     @Benchmark
     public void snowflakeGenerateBenchmarkSingleThread() {
-        pool.generate();
+
     }
 }

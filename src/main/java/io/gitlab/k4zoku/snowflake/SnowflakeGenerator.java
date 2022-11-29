@@ -280,7 +280,7 @@ public class SnowflakeGenerator implements Generator<Snowflake>, Comparable<Snow
      *
      * @return The generated Snowflake.
      */
-    @Contract(pure = true, value = "-> new")
+    @Contract(value = "-> new")
     public synchronized Snowflake generate() {
         long timestamp = timestampProvider.getTimestamp();
         if (timestamp < lastTimestamp) {

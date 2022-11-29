@@ -1,5 +1,7 @@
-package io.gitlab.k4zoku.snowflake;
+package io.gitlab.k4zoku.snowflake.test;
 
+import io.gitlab.k4zoku.snowflake.Snowflake;
+import io.gitlab.k4zoku.snowflake.SnowflakeGenerator;
 import io.gitlab.k4zoku.snowflake.time.TimestampProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
